@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
 import * as c from 'src/misc/constants'
+import { notifyHandler } from 'src/misc/helpers'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
