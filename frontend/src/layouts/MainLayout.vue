@@ -46,6 +46,8 @@
 <script>
 import { defineComponent, ref } from 'vue'
 import EssentialLink from 'components/EssentialLink.vue'
+import { useAuthStore } from 'src/stores/auth'
+import { notifyHandler } from 'src/misc/helpers'
 
 const linksList = [
   {
