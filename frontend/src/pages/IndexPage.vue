@@ -1,6 +1,6 @@
 <template>
-  <q-page class="flex flex-center items-center">
-    <h1>Fluber</h1>
+  <q-page class="column items-center">
+    <h1>Fluber Home</h1>
     <!-- TODO is the home page going straight to the map? -->
     <p class="q-px-md">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean at vehicula purus. Suspendisse eu
       lacus purus.
