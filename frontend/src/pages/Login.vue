@@ -2,9 +2,16 @@
   <div class="q-ma-xl">
     <h4>Login</h4>
     <q-form>
-      <q-input type="email" class="q-pb-sm" filled v-model="username" label="Email" />
+      <q-input type="email" class="q-pb-sm" filled v-model="email" label="Email" />
       <q-input type="password" class="q-pb-sm" filled v-model="password" label="Password" />
-      <q-btn color="primary" style="float:right" label="Submit" @click="doLogin()"></q-btn>
+      <div class="row">
+        <div class="row items-center">
+          <p class="q-ma-none q-pr-sm">No account? </p>
+          <q-btn color="primary" label="Register" outline @click="$router.push('/register')" />
+        </div>
+        <q-space />
+        <q-btn color="primary" label="Submit" @click="doLogin()" />
+      </div>
     </q-form>
   </div>
 </template>
@@ -22,13 +29,13 @@ export default {
   },
   data() {
     return {
-      username: null,
+      email: null,
       password: null
     }
   },
   methods: {
     async doLogin() {
-      const success = await this.authStore.doLogin(this.username, this.password)
+      const success = await this.authStore.doLogin(this.email, this.password)
       if (success) {
         this.$router.push('/')
         notifyHandler('positive', `Successfully logged in. Welcome, ${this.authStore.user.username}`)

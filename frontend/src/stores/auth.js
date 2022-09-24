@@ -9,10 +9,10 @@ export const useAuthStore = defineStore('auth', {
   }),
   persist: true,
   actions: {
-    async doLogin(username, password) {
+    async doLogin(email, password) {
       const resp = await axios
         .post(`${c.coreApiBaseUrl}/api/auth/local`, {
-          identifier: username,
+          identifier: email,
           password: password
         })
         .catch((err) => {
