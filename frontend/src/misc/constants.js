@@ -1,0 +1,1 @@
+export const coreApiBaseUrl = 'http://localhost:1337'  //TODO derive from env

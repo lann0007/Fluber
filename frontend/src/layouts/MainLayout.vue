@@ -7,8 +7,23 @@
         <q-toolbar-title>
           Fluber
         </q-toolbar-title>
-
-        <div>Quasar v{{ $q.version }}</div>
+        <q-btn v-if="!authStore.user" label="Login" icon="account_circle" flat @click="$router.push('/login')" />
+        <div v-else>
+          <q-btn-dropdown stretch flat icon="account_circle" :label="authStore.user.username">
+            <q-list>
+              <q-item v-close-popup clickable to="/profile">
+                <q-item-section>
+                  <q-item-label>Profile</q-item-label>
+                </q-item-section>
+              </q-item>
+              <q-item v-close-popup clickable @click="doLogout">
+                <q-item-section>
+                  <q-item-label>Log out</q-item-label>
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-btn-dropdown>
+        </div>
       </q-toolbar>
     </q-header>
 
@@ -43,20 +58,27 @@ const linksList = [
 
 export default defineComponent({
   name: 'MainLayout',
-
   components: {
     EssentialLink
   },
-
   setup() {
     const leftDrawerOpen = ref(false)
+    const authStore = useAuthStore()
 
     return {
       essentialLinks: linksList,
       leftDrawerOpen,
       toggleLeftDrawer() {
         leftDrawerOpen.value = !leftDrawerOpen.value
-      }
+      },
+      authStore
+    }
+  },
+  methods: {
+    doLogout() {
+      this.authStore.doLogout()
+      this.$router.push('/login')
+      notifyHandler('positive', 'Successfully logged out')      
     }
   }
 })
