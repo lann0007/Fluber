@@ -31,6 +31,24 @@ export const useAuthStore = defineStore('auth', {
       this.authToken = null
       this.user = null
     },
+    async doRegister(username, email, password) {
+      const resp = await axios
+        .post(`${c.coreApiBaseUrl}/api/auth/local/register`, {
+          username: username,
+          email: email,
+          password: password
+        })
+        .catch((err) => {
+          console.error(err.response)
+          notifyHandler('negative', 'Failed to register', err.response.statusText)
+          return false
+        })
+
+      //assume register request to API was successful
+      this.authToken = resp.data.jwt
+      this.user = resp.data.user
+      return true
+    },
     setAuthToken(authToken) {
       this.authToken = authToken
     },
