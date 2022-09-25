@@ -11,7 +11,7 @@
         <div v-else>
           <q-btn-dropdown stretch flat icon="account_circle" :label="authStore.user.username">
             <q-list>
-              <q-item v-close-popup clickable to="/profile">
+              <q-item v-close-popup clickable @click="$router.push('/profile')">
                 <q-item-section>
                   <q-item-label>Profile</q-item-label>
                 </q-item-section>

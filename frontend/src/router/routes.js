@@ -6,7 +6,9 @@ const routes = [
     children: [
       { path: '', component: () => import('pages/IndexPage.vue') },
       { path: '/login', component: () => import('pages/Login.vue') },
-      { path: '/register', component: () => import('pages/Register.vue') }
+      { path: '/register', component: () => import('pages/Register.vue') },
+      //TODO auth protect this route
+      { path: '/profile', component: () => import('pages/Profile.vue') },
     ]
   },
 
