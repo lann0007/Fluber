@@ -5,11 +5,6 @@
       <q-img class="col-6" style="border-radius: 50%;" :src="profilePicture" />
       <h5 style="text-align: center;" class="col-6 q-ma-none">{{ authStore.user.username }}</h5>
     </div>
-    <!-- <div class="row">
-      <span class="col-1"></span>
-      <q-btn label="Change Picture" class="q-my-md col-4" @click="uploadPfp()" />
-      <span class="col-7"></span>
-    </div> -->
     <div class="row justify-between">
       <q-file outlined v-model="newPfp" accept="image/*" label="Change Picture" clearable class="q-my-md col-8">
         <template v-slot:prepend>
@@ -64,7 +59,6 @@ export default {
       console.log('newPfp: ', this.newPfp)
       const formData = new FormData()
       formData.append('files', this.newPfp, this.newPfp.name)
-      formData.append('Authorization', `Bearer: ${this.authStore.authToken}`)
 
       //upload the file to the media library
       const resp = await axios
