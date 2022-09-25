@@ -78,8 +78,8 @@ export default defineComponent({
   },
   methods: {
     doLogout() {
-      this.authStore.doLogout()
       this.$router.push('/login')
+      this.authStore.doLogout()      
       notifyHandler('positive', 'Successfully logged out')      
     }
   }
