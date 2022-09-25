@@ -18,8 +18,19 @@ module.exports = {
    * run jobs, or perform some special logic.
    */
   async bootstrap(/* { strapi } */) {
-    //`driver` role is not part of the default roles, so we need to create it
-    await strapi.db
+    //get roles to determine ID that needs to be provided to the creation of new permissions
+    const roles = await strapi.db
+      .query('plugin::users-permissions.role')
+      .findMany()
+      .catch((err) => {
+        strapi.log.error(err)
+      })
+
+    const driverIndex = roles.findIndex((o) => o.type === 'driver' && o.name === 'Driver')
+    let driverRole = null
+    if (driverIndex === -1) {
+      //`driver` role is not part of the default roles, so we need to create it
+      driverRole = await strapi.db
       .query('plugin::users-permissions.role')
       .create({
         data: {
@@ -31,23 +42,17 @@ module.exports = {
       .catch((err) => {
         strapi.log.error(err)
       })
-
-    //get roles to determine ID that needs to be provided to the creation of new permissions
-    const roles = await strapi.db
-      .query('plugin::users-permissions.role')
-      .findMany()
-      .catch((err) => {
-        strapi.log.error(err)
-      })
+      strapi.log.info('Created `driver` role')
+    } else {
+      strapi.log.info('`Driver` role already exists')
+      driverRole = roles[driverIndex]
+    }
 
     const publicRole = roles.find(
       (o) => o.type === 'public' && o.name === 'Public'
     )
     const authenticatedRole = roles.find(
       (o) => o.type === 'authenticated' && o.name === 'Authenticated'
-    )
-    const driverRole = roles.find(
-      (o) => o.type === 'driver' && o.name === 'Driver'
     )
     await initPerms({ publicRole, authenticatedRole, driverRole })
 
