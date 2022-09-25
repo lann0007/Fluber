@@ -3,7 +3,7 @@
     <h4>Profile</h4>
     <div class="row items-center q-mb-md">
       <q-img class="col-6" style="border-radius: 50%;" :src="profilePicture" />
-      <h5 style="text-align: center;" class="col-6 q-ma-none">{{ authStore.user.username }}</h5>
+      <h5 v-if="authStore.user" style="text-align: center;" class="col-6 q-ma-none">{{ authStore.user.username }}</h5>
     </div>
     <div class="row justify-between">
       <q-file outlined v-model="newPfp" accept="image/*" label="Change Picture" clearable class="q-my-md col-8">
