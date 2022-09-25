@@ -89,16 +89,33 @@ async function initPerms({ publicRole, authenticatedRole, driverRole }) {
       strapi.log.error(err)
     })
 
-  //authenticated
-  await initPerm(exitingPermissions, 'plugin::users-permissions.user', ['me', 'update'], authenticatedRole)
-  await initPerm(exitingPermissions, 'plugin::upload.content-api', ['findOne', 'upload'], authenticatedRole)
-
-  //driver
-  await initPerm(exitingPermissions, 'plugin::users-permissions.user', ['me', 'update'], driverRole)
-  await initPerm(exitingPermissions, 'plugin::upload.content-api', ['findOne', 'upload'], driverRole)
-
+  const sharedPerms = [
+    {
+      roles: [authenticatedRole, driverRole],
+      api: 'plugin::users-permissions.user',
+      actions: ['me', 'update'],
+    },
+    {
+      roles: [authenticatedRole, driverRole],
+      api: 'plugin::upload.content-api',
+      actions: ['findOne', 'upload']
+    },
+  ]
+  for (const perm of sharedPerms) {
+    for (const role of perm.roles) {
+      await initPerm(exitingPermissions, perm.api, perm.actions, role)
+    }
+  }
 }
 
+/**
+ * TODO doc
+ * 
+ * @param {*} exitingPermissions 
+ * @param {*} api 
+ * @param {*} actions 
+ * @param {*} role 
+ */
 async function initPerm(exitingPermissions, api, actions, role) {
   for (const action of actions) {
     //check if perm exists before creating it
