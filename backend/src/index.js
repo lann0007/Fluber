@@ -17,8 +17,68 @@ module.exports = {
    * run jobs, or perform some special logic.
    */
   async bootstrap(/* { strapi } */) {
+    await initPerms()
     await createTestUser('TestUser', 'password', 'testuser@mail.com')
   },
+}
+
+async function initPerms() {
+  //get roles to determine ID that needs to be provided to the creation of new permissions
+  const roles = await strapi.db
+    .query('plugin::users-permissions.role')
+    .findMany()
+    .catch((err) => {
+      strapi.log.error(err)
+    })
+
+  const publicRole = roles.find(
+    (o) => o.type === 'public' && o.name === 'Public'
+  )
+  const authenticatedRole = roles.find(
+    (o) => o.type === 'authenticated' && o.name === 'Authenticated'
+  )
+
+  //get current list of permissions
+  const exitingPermissions = await strapi.db
+    .query('plugin::users-permissions.permission')
+    .findMany({
+      populate: true,
+    })
+    .catch((err) => {
+      strapi.log.error(err)
+    })
+
+  await initPerm(exitingPermissions, 'plugin::users-permissions.user', ['me', 'update'], authenticatedRole)
+  await initPerm(exitingPermissions, 'plugin::upload.content-api', ['findOne', 'upload'], authenticatedRole)
+
+}
+
+async function initPerm(exitingPermissions, api, actions, role) {
+  for (const action of actions) {
+    //check if perm exists before creating it
+    if (
+      !exitingPermissions.find(
+        (o) =>
+          o.action === `${api}.${action}` &&
+          o.role.id === role.id
+      )
+    ) {
+      strapi.log.info(
+        `Setting permission: user with '${role.name}' role can do '${action}' on '${api}' (${api}.${action})`
+      )
+      await strapi.db
+        .query('plugin::users-permissions.permission')
+        .create({
+          data: {
+            action: `${api}.${action}`,
+            role: role.id,
+          },
+        })
+        .catch((err) => {
+          strapi.log.error(err)
+        })
+    }
+  }
 }
 
 /**
