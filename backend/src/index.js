@@ -89,6 +89,9 @@ async function initPerms({ publicRole, authenticatedRole, driverRole }) {
       strapi.log.error(err)
     })
 
+  //need to be to `populate` relations in `user`
+  //  - for: `upload.content-api.find`, `plugin::users-permissions.role.find`, `api::driver-profile.driver-profile.find`
+  //TODO this will allow finding of all roles; we wan't to only allow a user to get *their* role
   const sharedPerms = [
     {
       roles: [authenticatedRole, driverRole],
@@ -98,8 +101,19 @@ async function initPerms({ publicRole, authenticatedRole, driverRole }) {
     {
       roles: [authenticatedRole, driverRole],
       api: 'plugin::upload.content-api',
-      actions: ['findOne', 'upload']
+      actions: ['findOne', 'find', 'upload']
     },
+    {
+      roles: [authenticatedRole, driverRole],
+      api: 'plugin::users-permissions.role',
+      actions: ['find']
+
+    },
+    {
+      roles: [driverRole],
+      api: 'api::driver-profile.driver-profile',
+      actions: ['find']
+    }
   ]
   for (const perm of sharedPerms) {
     for (const role of perm.roles) {
