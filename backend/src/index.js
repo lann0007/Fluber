@@ -112,7 +112,7 @@ async function initPerms({ publicRole, authenticatedRole, driverRole }) {
     {
       roles: [driverRole],
       api: 'api::driver-profile.driver-profile',
-      actions: ['find']
+      actions: ['find', 'update']
     }
   ]
   for (const perm of sharedPerms) {
