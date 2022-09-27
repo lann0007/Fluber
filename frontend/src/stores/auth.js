@@ -50,7 +50,7 @@ export const useAuthStore = defineStore('auth', {
         })
         .catch((err) => {
           console.error(err.response)
-          notifyHandler('negative', 'Failed to register', err.response.statusText)
+          notifyHandler('negative', 'Failed to register', err.response.data.error.message)
           return false
         })
 
