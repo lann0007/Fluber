@@ -41,7 +41,6 @@ export const useAuthStore = defineStore('auth', {
       this.authToken = null
       this.user = null
     },
-    //TODO also do call to `api/users/me` like in `doLogin()` (reuse the code)
     async doRegister(username, email, password) {
       const resp = await axios
         .post(`${c.coreApiBaseUrl}/api/auth/local/register`, {
@@ -57,8 +56,17 @@ export const useAuthStore = defineStore('auth', {
 
       //assume register request to API was successful
       this.authToken = resp.data.jwt
-      this.user = resp.data.user
-      return true
+      
+      //also try get the driver profile (can't `populate` on `auth/local`)
+      const success = await this.getUserProfile()
+        .catch((err) => {
+          notifyHandler('negative', 'Failed to login. Could not retrieve the user profile', err.message)
+          //if this request fails, the whole login flow was unsuccessful, so reset
+          this.authToken = null
+          console.error(err)
+        })
+      //`success` will be undefined if an error is caught, so cast to boolean
+      return !!success
     },
     setAuthToken(authToken) {
       this.authToken = authToken
