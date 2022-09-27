@@ -13,19 +13,18 @@
       eget, interdum at metus. Proin placerat nunc eu nisl auctor consequat.
     </p>
 
-    <div id="map"></div>
+    <MapComponent style="width:90%;"/>
   </q-page>
 </template>
 
 <script>
-import { defineComponent } from "vue";
-let map = L.map("map").setView([51.505, -0.09], 13);
-L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 19,
-  attribution: "© OpenStreetMap",
-}).addTo(map);
+import { defineComponent } from "vue"
+import MapComponent from '../components/MapComponent.vue'
 
 export default defineComponent({
-  name: "IndexPage",
-});
+  name: 'IndexPage',
+  components: {
+    MapComponent
+  }
+})
 </script>
