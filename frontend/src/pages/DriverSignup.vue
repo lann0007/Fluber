@@ -1,5 +1,4 @@
 <!-- TODO how do we want to handle approval process? There's no use case for it but I imagine the Admin would have to action it? We could just skip doing the approval for the demo and have it as future work -->
-<!-- TODO add loading indicator on submission -->
 <template>
   <div class="q-ma-xl">
     <h4>Driver Signup</h4>
