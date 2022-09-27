@@ -12,6 +12,12 @@ const routes = [
           requiresLoggedIn: true
         }
       },
+      //TODO don't allow navigation to here if already driver
+      {
+        path: '/driver-signup', component: () => import('pages/DriverSignup.vue'), meta: {
+          requiresLoggedIn: true
+        }
+      }
     ]
   },
 

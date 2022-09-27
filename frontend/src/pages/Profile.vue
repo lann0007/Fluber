@@ -42,8 +42,9 @@
       <q-img :src="driverIdentification" />
     </q-expansion-item>
 
-    <div class="row justify-center">
-      <q-btn label="Edit Profile" class="q-mt-md" @click="editDialogOpen = true" />
+    <div class="row justify-center q-mt-md">
+      <q-btn class="q-mx-sm" label="Edit Profile" @click="editDialogOpen = true" />
+      <q-btn class="q-mx-sm"  v-if="authStore.user.role.type !== 'driver'" label="Sign up As Driver" @click="$router.push('/driver-signup')"/>
     </div>
     <!-- TODO make dialog bigger -->
     <q-dialog v-model="editDialogOpen">
