@@ -13,18 +13,18 @@
       eget, interdum at metus. Proin placerat nunc eu nisl auctor consequat.
     </p>
 
-    <MapComponent style="width:90%;"/>
+    <MapComponent style="width: 90%" />
   </q-page>
 </template>
 
 <script>
-import { defineComponent } from "vue"
-import MapComponent from '../components/MapComponent.vue'
+import { defineComponent } from "vue";
+import MapComponent from "../components/MapComponent.vue";
 
 export default defineComponent({
-  name: 'IndexPage',
+  name: "IndexPage",
   components: {
-    MapComponent
-  }
-})
+    MapComponent,
+  },
+});
 </script>
