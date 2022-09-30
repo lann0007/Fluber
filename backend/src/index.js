@@ -1,4 +1,5 @@
 'use strict'
+const fs = require('fs')
 
 module.exports = {
   /**
@@ -17,27 +18,67 @@ module.exports = {
    * run jobs, or perform some special logic.
    */
   async bootstrap(/* { strapi } */) {
-    await initPerms()
-    await createTestUser('TestUser', 'password', 'testuser@mail.com')
+    //get roles to determine ID that needs to be provided to the creation of new permissions
+    const roles = await strapi.db
+      .query('plugin::users-permissions.role')
+      .findMany()
+      .catch((err) => {
+        strapi.log.error(err)
+      })
+
+    const driverIndex = roles.findIndex((o) => o.type === 'driver' && o.name === 'Driver')
+    let driverRole = null
+    if (driverIndex === -1) {
+      //`driver` role is not part of the default roles, so we need to create it
+      driverRole = await strapi.db
+      .query('plugin::users-permissions.role')
+      .create({
+        data: {
+          type: 'driver',
+          name: 'Driver',
+          description: 'Specialisation of the default `authenticated` role'
+        }
+      })
+      .catch((err) => {
+        strapi.log.error(err)
+      })
+      strapi.log.info('Created `driver` role')
+    } else {
+      strapi.log.info('`Driver` role already exists')
+      driverRole = roles[driverIndex]
+    }
+
+    const publicRole = roles.find(
+      (o) => o.type === 'public' && o.name === 'Public'
+    )
+    const authenticatedRole = roles.find(
+      (o) => o.type === 'authenticated' && o.name === 'Authenticated'
+    )
+    await initPerms({ publicRole, authenticatedRole, driverRole })
+
+    //basic passengers
+    await createTestUser('TestUser', 'password', 'testuser@mail.com', authenticatedRole)
+
+    //drivers
+    const driverUserResp = await createTestUser('TestDriver', 'password', 'testdriver@mail.com', driverRole)
+    await createDriverProfile(driverUserResp, {
+      firstName: 'John',
+      lastName: 'Doe',
+      licenseNumber: 'ABC123',
+      vehicleRegistration: 'S123ABC',
+    })
   },
 }
 
-async function initPerms() {
-  //get roles to determine ID that needs to be provided to the creation of new permissions
-  const roles = await strapi.db
-    .query('plugin::users-permissions.role')
-    .findMany()
-    .catch((err) => {
-      strapi.log.error(err)
-    })
-
-  const publicRole = roles.find(
-    (o) => o.type === 'public' && o.name === 'Public'
-  )
-  const authenticatedRole = roles.find(
-    (o) => o.type === 'authenticated' && o.name === 'Authenticated'
-  )
-
+/**
+ * Inits permissions defined in code by calling `initPerm()`
+ * 
+ * @param {Object} param object containing roles
+ * @param {Object} param.publicRole public role object
+ * @param {Object} param.authenticatedRole authenticated role object
+ * @param {Object} param.driverRole driver role object
+ */
+async function initPerms({ publicRole, authenticatedRole, driverRole }) {
   //get current list of permissions
   const exitingPermissions = await strapi.db
     .query('plugin::users-permissions.permission')
@@ -48,11 +89,60 @@ async function initPerms() {
       strapi.log.error(err)
     })
 
-  await initPerm(exitingPermissions, 'plugin::users-permissions.user', ['me', 'update'], authenticatedRole)
-  await initPerm(exitingPermissions, 'plugin::upload.content-api', ['findOne', 'upload'], authenticatedRole)
+  //need to be to `populate` relations in `user`
+  //  - for: `upload.content-api.find`, `plugin::users-permissions.role.find`, `api::driver-profile.driver-profile.find`
+  //TODO make sure actions that can affect other users are only allowed to be performed
+  //  on the logged-in user's data, e.g., they should only be able to update *their*
+  //  `user` and/or `driver` data, and no one elses
+  const perms = [
+    {
+      roles: [authenticatedRole, driverRole],
+      api: 'plugin::users-permissions.user',
+      actions: ['me', 'update'],
+    },
+    {
+      roles: [authenticatedRole, driverRole],
+      api: 'plugin::upload.content-api',
+      actions: ['findOne', 'find', 'upload']
+    },
+    {
+      roles: [authenticatedRole, driverRole],
+      api: 'plugin::users-permissions.role',
+      actions: ['find']
 
+    },
+    {
+      roles: [driverRole],
+      api: 'api::driver-profile.driver-profile',
+      actions: ['find', 'update']
+    },
+    {
+      roles: [authenticatedRole],
+      api: 'api::driver-profile.driver-profile',
+      actions: ['create']
+    }
+    ,
+    {
+      roles: [authenticatedRole],
+      api: 'plugin::users-permissions.role',
+      actions: ['find']
+    }
+  ]
+  for (const perm of perms) {
+    for (const role of perm.roles) {
+      await initPerm(exitingPermissions, perm.api, perm.actions, role)
+    }
+  }
 }
 
+/**
+ * TODO doc
+ * 
+ * @param {*} exitingPermissions 
+ * @param {*} api 
+ * @param {*} actions 
+ * @param {*} role 
+ */
 async function initPerm(exitingPermissions, api, actions, role) {
   for (const action of actions) {
     //check if perm exists before creating it
@@ -86,6 +176,9 @@ async function initPerm(exitingPermissions, api, actions, role) {
  * @param {String} username username
  * @param {String} password password
  * @param {String} email email
+ * @param {Object} role Strapi role object to assign user to
+ * 
+ * @returns {Object | null} created user object or null
  * 
  * TODO don't allow during deployment using `process.env.NODE_ENV`
  * 
@@ -95,19 +188,18 @@ async function createTestUser(
   username,
   password,
   email,
+  role
 ) {
   //check if user already exists
-  let user = await strapi.query('plugin::users-permissions.user').findOne({
+  const user = await strapi.query('plugin::users-permissions.user').findOne({
     where: { username: username },
   })
-  //get the role ID for `authenticated`
-  const roleOrm = strapi.query('plugin::users-permissions.role')
-  const role = await roleOrm.findOne({ where: { type: 'authenticated' } })
 
   if (user) {
     strapi.log.info(
       `Testing user with username ${username} already exists, nothing to do.`,
     )
+    return null
   } else {
     strapi.log.info(`Creating user for testing with username ${username}`)
 
@@ -121,7 +213,7 @@ async function createTestUser(
       role: role.id,
       provider: 'local',
     }
-    await strapi.plugins['users-permissions'].services.user
+    const resp = await strapi.plugins['users-permissions'].services.user
       .add(testUserObj)
       .catch((err) => {
         strapi.log.error(err)
@@ -132,5 +224,120 @@ async function createTestUser(
       `Successfully created user ${username} for the ${role.name} role, ` +
       `with password=${password}`,
     )
+    return resp
   }
+}
+
+/**
+ * Creates a driver profile and links to the provided user 
+ * based on: https://forum.strapi.io/t/upload-buffer-using-strapi-upload/18807/2
+ * 
+ * TODO: only allowing linking to `driverUser` that has the `driver` role
+ * 
+ * @param {Object} driverUser the user object of the user to link the driver profile to
+ * @param {Object} testDriverProfile driver profile data
+ * @param {String} testDriverProfile.firstName
+ * @param {String} testDriverProfile.lastName
+ * @param {String} testDriverProfile.licenseNumber
+ * @param {String} testDriverProfile.vehicleRegistration
+ * 
+ * @returns {Object | null} object of created driver profile, or null
+ */
+async function createDriverProfile(driverUser, testDriverProfile) {
+  //check for exiting driver with same details
+  const driver = await strapi.db
+    .query('api::driver-profile.driver-profile')
+    .findOne({
+      where: {
+        firstName: testDriverProfile.firstName,
+        lastName: testDriverProfile.lastName,
+        licenseNumber: testDriverProfile.licenseNumber,
+        vehicleRegistration: testDriverProfile.vehicleRegistration,
+      }
+    })
+  if (driver) {
+    strapi.log.info(
+      `Testing driver profile with first name ${driver.firstName} and last name ${driver.lastName} already exists, nothing to do.`,
+    )
+    return null
+  }
+
+  //create the driver profile to be linked further down
+  const driverProfileResp = await strapi.db
+    .query('api::driver-profile.driver-profile')
+    .create({
+      data: testDriverProfile
+    })
+    .catch((err) => {
+      strapi.log.error(err)
+    })
+
+  //now link this driver profile with the provided user
+  await strapi.db
+    .query('plugin::users-permissions.user')
+    .update({
+      where: { id: driverUser.id },
+      data: {
+        driverProfile: driverProfileResp.id
+      },
+    })
+    .catch((err) => {
+      strapi.log.error(err)
+    })
+
+  //init the identification for this Driver
+  const { Readable } = require('stream')
+  const getServiceUpload = (name) => {
+    return strapi.plugin('upload').service(name)
+  }
+  const uploadAndLinkDocument = async (buffer, { filename, extension, mimeType, refId, ref, field }) => {
+    const config = strapi.config.get('plugin.upload')
+
+    // add generated document
+    const entity = {
+      name: filename,
+      alternateText: filename,
+      caption: filename,
+      width: 0, //FIXME
+      height: 0,  //FIXME
+      hash: filename,
+      ext: extension,
+      mime: mimeType,
+      size: buffer.length,
+      provider: config.provider,
+    }
+    if (refId) {
+      entity.related = [
+        {
+          id: refId,
+          __type: ref,
+          __pivot: { field },
+        },
+      ]
+    }
+    entity.getStream = () => Readable.from(buffer)
+    await getServiceUpload('provider').upload(entity)
+    const fileValues = { ...entity }
+    const res = await strapi
+      .query('plugin::upload.file')
+      .create({ data: fileValues })
+    return res
+  }
+  const file = fs.readFileSync('public/testDriverBirthCertificate.jpg', function (err, data) {
+    if (err) throw err
+    console.log('file data: ', data)
+  })
+  const resp = await uploadAndLinkDocument(file, {
+    filename: 'testDriverBirthCertificate',
+    extension: '.jpg',
+    mimeType: 'image/jpeg',
+    refId: driverProfileResp.id,
+    ref: 'api::driver-profile.driver-profile',
+    field: 'identification'
+  })
+
+  strapi.log.info(
+    `Successfully created driver profile for user ${driverUser.username} with first name ${driverProfileResp.firstName} and last name ${driverProfileResp.lastName}.`,
+  )
+  return driverProfileResp
 }

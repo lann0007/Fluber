@@ -1,6 +1,8 @@
 import { route } from 'quasar/wrappers'
 import { createRouter, createMemoryHistory, createWebHistory, createWebHashHistory } from 'vue-router'
 import routes from './routes'
+import { useAuthStore } from '../stores/auth'
+import { notifyHandler } from 'src/misc/helpers'
 
 /*
  * If not building with SSR mode, you can
@@ -25,6 +27,25 @@ export default route(function (/* { store, ssrContext } */) {
     // quasar.conf.js -> build -> publicPath
     history: createHistory(process.env.MODE === 'ssr' ? void 0 : process.env.VUE_ROUTER_BASE)
   })
+
+  Router.beforeEach(
+    async (to) => {
+      const authStore = useAuthStore()
+      const isRequiresAuth = to.matched.some(
+        (r) => r.meta.requiresLoggedIn,
+      )
+      if (!isRequiresAuth) {
+        return true
+      }
+      const isLoggedIn = !!authStore.user
+      console.log('isLoggedIn? ', isLoggedIn)
+      if (!isLoggedIn) {
+        notifyHandler('negative', `Login required to access path '${to.fullPath}'`)
+        Router.push('/login')
+      }
+      return true
+    }
+  )
 
   return Router
 })

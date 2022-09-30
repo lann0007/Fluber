@@ -7,8 +7,17 @@ const routes = [
       { path: '', component: () => import('pages/IndexPage.vue') },
       { path: '/login', component: () => import('pages/Login.vue') },
       { path: '/register', component: () => import('pages/Register.vue') },
-      //TODO auth protect this route
-      { path: '/profile', component: () => import('pages/Profile.vue') },
+      {
+        path: '/profile', component: () => import('pages/Profile.vue'), meta: {
+          requiresLoggedIn: true
+        }
+      },
+      //TODO don't allow navigation to here if already driver
+      {
+        path: '/driver-signup', component: () => import('pages/DriverSignup.vue'), meta: {
+          requiresLoggedIn: true
+        }
+      }
     ]
   },
 

@@ -7,6 +7,7 @@
         <q-toolbar-title>
           Fluber
         </q-toolbar-title>
+
         <q-btn v-if="!authStore.user" label="Login" icon="account_circle" flat @click="$router.push('/login')" />
         <div v-else>
           <q-btn-dropdown stretch flat icon="account_circle" :label="authStore.user.username">
@@ -28,12 +29,15 @@
     </q-header>
 
     <q-drawer v-model="leftDrawerOpen" show-if-above bordered>
-      <q-list>
+      <q-list class="column items-center">
         <q-item-label header>
           Navigation
         </q-item-label>
 
         <EssentialLink v-for="link in essentialLinks" :key="link.title" v-bind="link" />
+        <div class="fixed-bottom row justify-center q-mb-md">
+          <q-btn label="Toggle Dark Mode" @click="$q.dark.toggle()" />
+        </div>        
       </q-list>
     </q-drawer>
 
@@ -78,8 +82,8 @@ export default defineComponent({
   },
   methods: {
     doLogout() {
-      this.authStore.doLogout()
       this.$router.push('/login')
+      this.authStore.doLogout()      
       notifyHandler('positive', 'Successfully logged out')      
     }
   }
