@@ -4,30 +4,39 @@
     styles and layout should be done on this `MapComponent` (it's parent) -->
   <l-map
     v-if="userCoords !== null"
-    style="height: 300px"
+    id="mapItem"
+    style="height: 400px"
     :zoom="18"
     :maxZoom="19"
     :center="userCoords"
     ref="theMap"
     @ready="makeMapRef()"
   >
-    <!-- <l-tile-layer :url="url" :attribution="attribution"></l-tile-layer> -->
-    <!-- <l-marker :lat-lng="userCoords"></l-marker> -->
+  <l-control position="bottomleft" >
+    <q-btn color="primary" label="Test Routing" @click="testRouting()" />
+  </l-control>
   </l-map>
   <!-- NOTE: this div might show for some time before the location API can get the location -->
   <h2 v-else>Waiting for GPS</h2>
 </template>
 
 <script>
-import { LMap } from '@vue-leaflet/vue-leaflet'
+import { LMap, LControl } from '@vue-leaflet/vue-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
 export default {
   components: {
     LMap,
-    // LTileLayer,
-    // LMarker
+    LControl,
+  },
+  beforeMount() {
+    //can only have one script tag but we need the leaflet-routing-machine script
+    //https://stackoverflow.com/a/47002863
+    let routingMachineScript = document.createElement('script')
+    //FIXME this should probably be the local node module one, but can't seem to get it working
+    routingMachineScript.setAttribute('src', 'https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js')
+    document.head.appendChild(routingMachineScript)
   },
   mounted() {
     this.startLocationUpdates()
@@ -57,7 +66,7 @@ export default {
         console.log('getting userCoords: ', this.userCoords_)
         return this.userCoords_
       }
-    }
+    },
   },
   methods: {
     startLocationUpdates() {
@@ -85,7 +94,21 @@ export default {
       }).addTo(this.map)
 
       L.marker(this.userCoords).addTo(this.map)
+    },
+    testRouting() {
+      // http://www.liedman.net/leaflet-routing-machine/api/
+      L.Routing.control({
+        waypoints: [
+          L.latLng(-35.007339, 138.573343), //Tonsley carpark
+          L.latLng(-34.992860, 138.574918), //Daws Rd. / Main Sth. Rd. intersection
+        ],
+        routeWhileDragging: true
+      }).addTo(this.map)
     }
   }
 }
 </script>
+
+<style>
+  @import 'https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css'
+</style>
