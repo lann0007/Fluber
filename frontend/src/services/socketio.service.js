@@ -31,7 +31,11 @@ class SocketioService {
 
   socketIsOpen() {
     console.log('checking if socket is open and returning: ', !!this.socket)
-    return !!this.socket
+    try {
+      return this.socket.connected
+    } catch {
+      return false
+    }
   }
 
   subscribeToMessages(cb) {
