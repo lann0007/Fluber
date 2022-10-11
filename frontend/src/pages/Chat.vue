@@ -5,7 +5,7 @@
 -->
 <template>
   <div class="q-ma-xl">
-    <div v-for="msg of msgStore.messages" :key="msg">{{msg}}</div>
+    <div v-for="msg of msgStore.getMessages" :key="msg">{{msg}}</div>
     <q-input placeholder="Message" v-model="msg" />
     <q-btn label="Send" @click="sendMsg()" />
   </div>

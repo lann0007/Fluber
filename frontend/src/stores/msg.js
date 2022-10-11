@@ -5,11 +5,10 @@ export const useMsgStore = defineStore('msg', {
     //TODO populate with message history from backend
     messages: []
   }),
-  // persist: true,
+  persist: true,
 
   getters: {
     getMessages (state) {
-      console.log('getting messages: ', state.messages)
       return state.messages
     }
   },
