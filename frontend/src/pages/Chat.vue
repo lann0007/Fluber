@@ -5,7 +5,17 @@
 -->
 <template>
   <div class="q-ma-xl">
-    <div v-for="msg of msgStore.getMessages" :key="msg">{{msg}}</div>
+    <h6>Chat with {{ this.ephemeralStore.getUserToChatWith.username }}</h6>
+    <div v-for="msg of msgStore.messages" :key="msg">
+      <!-- {{msg}} -->
+      <!-- check the `id` (i.e., user's ID) for how to display message -->
+      <p style="font-size: 2em; margin:0" :class="[msg.id === authStore.user.id ? 'sentMsg' : 'receivedMsg']">
+        {{ msg.message }}
+      </p>
+      <div style="margin-bottom:10px" :class="[msg.id === authStore.user.id ? 'sentMsg' : 'receivedMsg']">
+        {{ msg.name }}
+      </div>
+    </div>
     <q-input placeholder="Message" v-model="msg" />
     <q-btn label="Send" @click="sendMsg()" />
   </div>
@@ -65,6 +75,7 @@ export default {
       console.log('receiver: ', receiver)
       const message = this.msg
       SocketioService.sendMessage({message, roomName: receiver}, cb => {
+        console.log(cb)
         // this.messages.push({
         //   message,
         //   id: this.authStore.user.id,
@@ -82,3 +93,11 @@ export default {
   }
 }
 </script>
+<style>
+  .sentMsg {
+    text-align: right;
+  }
+  .receivedMsg {
+    text-align: left;
+  }
+</style>
