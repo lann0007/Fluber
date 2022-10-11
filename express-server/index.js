@@ -34,6 +34,7 @@ io.on('connection', (socket) => {
   })
 
   socket.on('message', ({ message, roomName }, callback) => {
+    console.log('sending message to: ', roomName)
     // generate data to send to receivers
     const outgoingMessage = {
       message,
@@ -64,7 +65,7 @@ io.use(async (socket, next) => {
     })
     return next()
   } catch (err) {
-    console.error(err.response.data.error)
+    console.error('User failed authentication with error: ', err.response.data.error)
     return next(new Error(err.response.data.error))
   }
 })

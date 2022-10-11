@@ -100,6 +100,7 @@ export default defineComponent({
       notifyHandler('positive', 'Successfully logged out')      
     },
     openMessageSocket() {
+      console.log('openMessageSocket()')
       if(!SocketioService.socketIsOpen()) {
         SocketioService.setupSocketConnection(this.authStore.authToken, this.authStore.user)
         SocketioService.subscribeToMessages((err, data) => {
