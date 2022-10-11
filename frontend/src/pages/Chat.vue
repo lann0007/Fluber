@@ -16,8 +16,8 @@
         {{ msg.name }}
       </div>
     </div>
-    <q-input placeholder="Message" v-model="msg" />
-    <q-btn label="Send" @click="sendMsg()" />
+    <q-input placeholder="Message" v-model="msg" @keydown.enter="sendMsg()"  />
+    <q-btn label="Send" @click="sendMsg()" :disable="!msg"/>
   </div>
 </template>
 
@@ -69,6 +69,7 @@ export default {
   },
   methods: {
     sendMsg() {
+      if (!this.msg) return
       //the room to use is the user ID of the person we're trying to message
       const receiver = this.ephemeralStore.getUserToChatWith.id      
       console.log('sending msg: ', this.msg)
