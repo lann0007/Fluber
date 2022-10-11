@@ -1,99 +1,84 @@
-<!-- main logic comes from the second flow in: https://developer.ibm.com/tutorials/cl-rtchat-app/ -->
-<!-- TODO maintain the chat history (probably save in Strapi and populate `messages` using the `mounted()` vue lifecycle hook) -->
+<!-- 
+  based off of:
+  https://deepinder.me/creating-a-real-time-chat-app-with-vue-socket-io-and-nodejs
+  https://deepinder.me/creating-a-real-time-chat-app-with-vue-socket-io-and-nodejs-2
+-->
 <template>
   <div class="q-ma-xl">
-    <p>Connection Status: {{ connectStatus }}</p>
-    <p v-for="m of messages" :key="m.id">{{m}}</p>
+    <div v-for="msg of msgStore.messages" :key="msg">{{msg}}</div>
     <q-input placeholder="Message" v-model="msg" />
     <q-btn label="Send" @click="sendMsg()" />
   </div>
 </template>
+
 <script>
+import SocketioService from '../services/socketio.service.js'
 import { useAuthStore } from 'src/stores/auth'
+import { useEphemeralStore } from 'src/stores/ephemeral'
+import { useMsgStore } from 'src/stores/msg'
 
 export default {
   name: 'Chat-page',
   setup() {
     const authStore = useAuthStore()
+    const ephemeralStore = useEphemeralStore()
+    const msgStore = useMsgStore()
     return {
-      authStore
+      authStore,
+      ephemeralStore,
+      msgStore,
     }
   },
   created() {
-    //https://www.youtube.com/watch?v=4via-J98jwM
-    console.log('Starting websocket connection')
-    //these callback functions need access to `this` context
-    //https://stackoverflow.com/a/31307223
-    var self = this
-
-    //TODO derive this host from environment variables
-    const host = 'node-red-gdmxk-2022-09-05.au-syd.mybluemix.net'
-    
-    const wsSendUriSend = `wss://${host}/ws/chat`
-    this.wsSend = new WebSocket(wsSendUriSend) 
-
-    this.wsSend.onopen = function (ev) {
-      self.connectStatus = '[Connected]'
-      console.info('Connected to websocket with URI: ', wsSendUriSend)
-    }
-
-    this.wsSend.onclose = function (ev) {
-      self.connectStatus = '[Disconnected]'
-      console.info('Disconnected to websocket with URI: ', wsSendUriSend)
+    if(this.ephemeralStore.getUserToChatWith === null) {
+      this.$router.push('/ride-history')
+    } else {
+      console.log('opening chat session with: ', this.ephemeralStore.getUserToChatWith.username)
+      //TODO also open socket elsewhere, so that we can chat without being at this page
+      if(!SocketioService.socketIsOpen()) {
+        SocketioService.setupSocketConnection(this.authStore.authToken, this.authStore.user)
+        SocketioService.subscribeToMessages((err, data) => {
+          // this.messages.push(data)
+          this.msgStore.addMessage({
+            message,
+            id: this.authStore.user.id,
+            name: this.authStore.user.username
+          })
+        })
+      }
     }    
-
-    this.wsSend.onmessage = function (ev) {
-      console.log('ev: ', ev)
-      console.log('wsSend onmessage triggered')
-      const payload = JSON.parse(ev.data)
-      console.log('payload: ', payload)
-      self.messageId++
-      self.messages.push({ user: payload.user, message: payload.message, timeSent: payload.ts, id: self.messageId })
-    }   
+  },
+  beforeUnmount() {
+    SocketioService.disconnect()
   },
   data() {
     return {
-      wsSend: null,
-      wsReceive: null,
-      connectStatus: null,
-      //need a key in the `v-for` loop
-      messageId: 0,
-      messages: [],
       msg: '',
-      // sendTo: null,
+      // messages: []
     }
   },
   methods: {
     sendMsg() {
-      const session = (() => {
-        console.log('latest message: ', this.messages[this.messages.length - 1])
-        if (
-          this.messages.length > 0 &&
-          Object.keys(this.messages[this.messages.length - 1]).includes('session')
-        ) {
-          return this.messages[this.messages.length - 1].session
-        }
-
-        return null
-      })()
-      console.log('using session: ', session)
-
-      const payload = {
-        message: this.msg,
-        user: this.authStore.user.username,
-        // sendTo: this.sendTo,
-        ts: (new Date()),
-        session: session,
-      }
-
-      this.wsSend.send(JSON.stringify(payload))
-      this.msg = ''
+      //the room to use is the user ID of the person we're trying to message
+      const receiver = this.ephemeralStore.getUserToChatWith.id      
+      console.log('sending msg: ', this.msg)
+      console.log('receiver: ', receiver)
+      const message = this.msg
+      SocketioService.sendMessage({message, roomName: receiver}, cb => {
+        // this.messages.push({
+        //   message,
+        //   id: this.authStore.user.id,
+        //   name: this.authStore.user.username
+        // })
+        this.msgStore.addMessage({
+          message,
+          id: this.authStore.user.id,
+          name: this.authStore.user.username
+        })
+        //clear input
+        this.msg = ''
+      })
     }
   }
 }
 </script>
-<!-- 
-
-  [{"id":"4de189a4e2fdb82c","type":"tab","label":"Test Chat","disabled":false,"info":"","env":[]},{"id":"66c300675ea6c922","type":"websocket in","z":"4de189a4e2fdb82c","name":"","server":"bc740d23.438bf","client":"","x":290,"y":200,"wires":[["a0d8819af7b9f357","c72655c55022c060"]]},{"id":"a0d8819af7b9f357","type":"function","z":"4de189a4e2fdb82c","name":"","func":"let newMsg = {}\nconst parsedPayload = JSON.parse(msg.payload)\n\nif (!parsedPayload.session) {\n    newMsg.payload = parsedPayload\n    newMsg.payload.session = msg._session\n    newMsg.payload = JSON.stringify(newMsg.payload)\n} else {\n    msg._session = parsedPayload.session\n}\n\nreturn newMsg","outputs":1,"noerr":0,"initialize":"","finalize":"","libs":[],"x":460,"y":200,"wires":[["7dd503ab7dc44571","4c58ebfbbe2104ad"]]},{"id":"7dd503ab7dc44571","type":"websocket out","z":"4de189a4e2fdb82c","name":"","server":"bc740d23.438bf","x":645,"y":200,"wires":[]},{"id":"c72655c55022c060","type":"debug","z":"4de189a4e2fdb82c","name":"before function","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"true","targetType":"full","statusVal":"","statusType":"auto","x":480,"y":300,"wires":[]},{"id":"4c58ebfbbe2104ad","type":"debug","z":"4de189a4e2fdb82c","name":"after function","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"true","targetType":"full","statusVal":"","statusType":"auto","x":710,"y":320,"wires":[]},{"id":"bc740d23.438bf","type":"websocket-listener","path":"/ws/chat","wholemsg":"false"}]
-
- -->

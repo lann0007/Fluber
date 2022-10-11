@@ -59,6 +59,12 @@ const linksList = [
     caption: 'Main page',
     icon: 'home',
     link: '/'
+  },
+  {
+    title: 'Ride History',
+    caption: 'Past rides',
+    icon: 'directions_car',
+    link: '/#/ride-history'
   }
 ]
 

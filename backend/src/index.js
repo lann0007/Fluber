@@ -120,11 +120,16 @@ async function initPerms({ publicRole, authenticatedRole, driverRole }) {
       roles: [authenticatedRole],
       api: 'api::driver-profile.driver-profile',
       actions: ['create']
-    }
-    ,
+    },
     {
       roles: [authenticatedRole],
       api: 'plugin::users-permissions.role',
+      actions: ['find']
+    },
+    {
+      roles: [authenticatedRole, driverRole],
+      api: 'plugin::users-permissions.user',
+      //TODO change to `findOne` - right now messaging requires a full list of users to select from, but that will change to select a particular user from their trip history (thus we just need `findOne`)
       actions: ['find']
     }
   ]

@@ -22,6 +22,11 @@ const routes = [
         path: '/chat', component: () => import('pages/Chat.vue'), meta: {
           requiresLoggedIn: true
         }
+      },
+      {
+        path: '/ride-history', component: () => import('pages/RideHistory.vue'), meta: {
+          requiresLoggedIn: true
+        }
       }
     ]
   },
