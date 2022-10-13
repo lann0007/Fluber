@@ -33,16 +33,23 @@
       </tbody>
     </q-markup-table>
 
-    <!-- TODO add ability to remove a destination -->
     <div v-if="confirmedDestinations.length > 0">
       <h6 class="q-mb-none">Current trip's selected destinations</h6>
-      <ol>
-        <li v-for="d in confirmedDestinations" :key="d">
-          {{ d.display_name }}
-        </li>
-      </ol>
+      <q-markup-table wrap-cells>
+        <tbody>
+          <tr v-for="(d, index) of confirmedDestinations" :key="d">
+            <td>{{ index + 1 }}</td>
+            <td>
+              {{ d.display_name }}
+            </td>
+            <td>
+              <q-btn label="Remove" @click="removeDestination(index)" />
+            </td>
+          </tr>
+        </tbody>
+      </q-markup-table>
     </div>
-    
+
     <q-btn
       v-if="confirmedDestinations.length > 0"
       :label="confirmTripLabel"
@@ -105,6 +112,9 @@ export default {
         return this.userCoords_
       }
     },
+    //FIXME if we add a destination and remove one before the call to `confirmTrip()`,
+    //the button will read 'Confirm Trip Change' (after addition) then 'Confirm Trip'
+    //(after removal), but should always read 'Confirm Trip Change'
     confirmTripLabel() {
       const defaultLabel = 'Confirm Trip'
       const changeLabel = 'Confirm Trip Change'
@@ -168,6 +178,9 @@ export default {
       //`boundingbox` coordinates to check distances using external library
       console.log('adding destination: ', destination)
       this.confirmedDestinations.push(destination)
+    },
+    removeDestination(index) {
+      this.confirmedDestinations.splice(index, 1)
     },
     setRouteToUse(route) {
       console.log('set route to use: ', route)
