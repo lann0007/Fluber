@@ -1,13 +1,14 @@
 <!-- TODO error handling -->
-<!-- TODO multiple dropoff points -->
 
 <template>
   <q-page class="q-ma-xl column items-center">
     <h1>Fluber Home</h1>
+
     <q-input
       style="width: 100%"
       label="Where to? (type address)"
       v-model="destinationAddress"
+      clearable
       @keydown.enter="searchDestination()"
     />
     <q-btn
@@ -18,6 +19,7 @@
       :disable="!destinationAddress"
       :loading="loadingSearch"
     />
+
     <q-markup-table v-if="searchResults && !confirmedDestination" wrap-cells>
       <tbody>
         <tr v-for="r of searchResults" :key="r">
@@ -25,22 +27,40 @@
             <p>{{r.display_name}}</p>
           </td>
           <td>
-            <q-btn label="Select" @click="confirmDestination(r)" />
+            <q-btn label="Select" @click="addDestination(r)" />
           </td>
         </tr>
       </tbody>
     </q-markup-table>
+
+    <!-- TODO add ability to remove a destination -->
+    <div v-if="confirmedDestinations.length > 0">
+      <h6 class="q-mb-none">Current trip's selected destinations</h6>
+      <ol>
+        <li v-for="d in confirmedDestinations" :key="d">
+          {{ d.display_name }}
+        </li>
+      </ol>
+    </div>
+
     <!-- TODO is the home page going straight to the map? -->
     <MapComponent
-      v-if="confirmedDestination"
-      :destination="confirmedDestination"
+      v-if="rideConfirmed"
+      :destinations="confirmedDestinations"
       :user-coords="userCoords"
       @route-to-use="(e) => setRouteToUse(e)"
     />
+    <!-- TODO have this say 'Confirm Trip Edit if we've already calculated a trip but they add/remove a destination -->
     <q-btn
-      v-if="confirmedDestination"
+      v-if="confirmedDestinations.length > 0"
       label="Confirm Trip"
-      :disable="!routeToUse"
+      class="q-mt-md"
+      @click="rideConfirmed = true"
+    />
+    <q-btn
+      v-if="confirmedDestinations.length > 0 && routeToUse"
+      label="Order Ride"
+      color="primary"
       class="q-mt-md"
       @click="orderRide()"
     />
@@ -67,7 +87,8 @@ export default {
     return {
       destinationAddress: null,
       searchResults: null,
-      confirmedDestination: null,
+      confirmedDestinations: [],
+      rideConfirmed: false,
       loadingSearch: false,
       userCoords_: null,
       routeToUse: null,
@@ -122,9 +143,12 @@ export default {
       }
       this.loadingSearch = false
     },
-    confirmDestination(destination) {
-      console.log('confirming destination: ', destination)
-      this.confirmedDestination = destination
+    addDestination(destination) {
+      //TODO don't allow adding destinations that are too close together - quick solution
+      //is to use the `place_id` or something, but bette solution would be to use the
+      //`boundingbox` coordinates to check distances using external library
+      console.log('adding destination: ', destination)
+      this.confirmedDestinations.push(destination)
     },
     setRouteToUse(route) {
       console.log('set route to use: ', route)

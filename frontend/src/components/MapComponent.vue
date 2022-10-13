@@ -31,8 +31,8 @@ export default {
     LMap,
   },
   props: {
-    destination: {
-      type: Object,
+    destinations: {
+      type: Array,
       required: true
     },
     userCoords: {
@@ -78,17 +78,23 @@ export default {
       Loading.hide()
     },
     async routeToDestination() {
+      const waypointsArr = []      
+      waypointsArr.push(
+        //start at user's location
+        L.latLng(this.userCoords.lat, this.userCoords.lng)
+      )
+      for (const destination of this.destinations) {
+        waypointsArr.push(L.latLng(destination.lat, destination.lon))
+      }
+
       // http://www.liedman.net/leaflet-routing-machine/api/
       const resp = L.Routing.control({
-        waypoints: [
-          L.latLng(this.userCoords.lat, this.userCoords.lng),
-          L.latLng(this.destination.lat, this.destination.lon)
-        ]
+        waypoints: waypointsArr
       })
       .addTo(this.map)
 
       //wait to finish calculations then grab the selected route
-      await this.sleep(500)
+      await this.sleep(1000)
       const route = resp._selectedRoute
 
       //emit a vue event to tell parent component about route
