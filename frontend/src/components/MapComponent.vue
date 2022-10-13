@@ -25,6 +25,7 @@ import { LMap } from '@vue-leaflet/vue-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { Loading } from 'quasar'
+import { sleep } from '../misc/helpers'
 
 export default {
   components: {
@@ -73,7 +74,7 @@ export default {
 
       //need a slight delay for data to be ready
       Loading.show()
-      await this.sleep(500)
+      await sleep(500)
       this.routeToDestination()
       Loading.hide()
     },
@@ -94,16 +95,12 @@ export default {
       .addTo(this.map)
 
       //wait to finish calculations then grab the selected route
-      await this.sleep(1000)
+      await sleep(1000)
       const route = resp._selectedRoute
 
       //emit a vue event to tell parent component about route
       this.$emit('routeToUse', route)
     },
-    //https://stackoverflow.com/a/39914235
-    sleep(ms) {
-      return new Promise(resolve => setTimeout(resolve, ms));
-    }
   }
 }
 </script>
