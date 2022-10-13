@@ -1,3 +1,5 @@
+<!-- TODO error handling -->
+
 <template>
   <!-- source: https://vue2-leaflet.netlify.app/quickstart/#hello-map -->
   <!-- for some reason if this is wrapped in another HTML element it won't render, so any
@@ -12,23 +14,31 @@
     ref="theMap"
     @ready="makeMapRef()"
   >
-  <l-control position="bottomleft" >
-    <q-btn color="primary" label="Test Routing" @click="testRouting()" />
-  </l-control>
+    <!-- put other leaflet elements here -->
   </l-map>
   <!-- NOTE: this div might show for some time before the location API can get the location -->
   <h2 v-else>Waiting for GPS</h2>
 </template>
 
 <script>
-import { LMap, LControl } from '@vue-leaflet/vue-leaflet'
+import { LMap } from '@vue-leaflet/vue-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { Loading } from 'quasar'
 
 export default {
   components: {
     LMap,
-    LControl,
+  },
+  props: {
+    destination: {
+      type: Object,
+      required: true
+    },
+    userCoords: {
+      type: Object,
+      required: true
+    }
   },
   beforeMount() {
     //can only have one script tag but we need the leaflet-routing-machine script
@@ -37,12 +47,6 @@ export default {
     //FIXME this should probably be the local node module one, but can't seem to get it working
     routingMachineScript.setAttribute('src', 'https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js')
     document.head.appendChild(routingMachineScript)
-  },
-  mounted() {
-    this.startLocationUpdates()
-  },
-  unmounted() {
-    this.stopLocationUpdates()
   },
   data() {
     return {
@@ -56,37 +60,9 @@ export default {
       userCoords_: null,
     }
   },
-  computed: {
-    userCoords: {
-      set(val) {
-        console.log('setting userCoords: ', val)
-        this.userCoords_ = val
-      },
-      get() {
-        console.log('getting userCoords: ', this.userCoords_)
-        return this.userCoords_
-      }
-    },
-  },
   methods: {
-    startLocationUpdates() {
-      this.watchPositionId = navigator.geolocation.watchPosition(
-        (pos) => {
-          this.userCoords = {
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-          }
-        },
-        (err) => {
-          console.error('navigator experienced error watching position: ', err)
-        }
-      )
-    },
-    stopLocationUpdates() {
-      navigator.geolocation.clearWatch(this.watchPositionId)
-    },
     //https://vue2-leaflet.netlify.app/quickstart/#accessing-leaflet-api
-    makeMapRef() {
+    async makeMapRef() {
       this.map = this.$refs.theMap.leafletObject
 
       L.tileLayer(this.url, {
@@ -94,21 +70,38 @@ export default {
       }).addTo(this.map)
 
       L.marker(this.userCoords).addTo(this.map)
+
+      //need a slight delay for data to be ready
+      Loading.show()
+      await this.sleep(500)
+      this.routeToDestination()
+      Loading.hide()
     },
-    testRouting() {
+    async routeToDestination() {
       // http://www.liedman.net/leaflet-routing-machine/api/
-      L.Routing.control({
+      const resp = L.Routing.control({
         waypoints: [
-          L.latLng(-35.007339, 138.573343), //Tonsley carpark
-          L.latLng(-34.992860, 138.574918), //Daws Rd. / Main Sth. Rd. intersection
-        ],
-        routeWhileDragging: true
-      }).addTo(this.map)
+          L.latLng(this.userCoords.lat, this.userCoords.lng),
+          L.latLng(this.destination.lat, this.destination.lon)
+        ]
+      })
+      .addTo(this.map)
+
+      //wait to finish calculations then grab the selected route
+      await this.sleep(500)
+      const route = resp._selectedRoute
+
+      //emit a vue event to tell parent component about route
+      this.$emit('routeToUse', route)
+    },
+    //https://stackoverflow.com/a/39914235
+    sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
     }
   }
 }
 </script>
 
 <style>
-  @import 'https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css'
+@import 'https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css'
 </style>
