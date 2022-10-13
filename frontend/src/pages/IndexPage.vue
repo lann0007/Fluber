@@ -42,6 +42,13 @@
         </li>
       </ol>
     </div>
+    
+    <q-btn
+      v-if="confirmedDestinations.length > 0"
+      :label="confirmTripLabel"
+      class="q-my-md"
+      @click="confirmTrip()"
+    />
 
     <!-- TODO is the home page going straight to the map? -->
     <MapComponent
@@ -49,13 +56,6 @@
       :destinations="confirmedDestinations"
       :user-coords="userCoords"
       @route-to-use="(e) => setRouteToUse(e)"
-    />
-    <!-- TODO have this say 'Confirm Trip Edit if we've already calculated a trip but they add/remove a destination -->
-    <q-btn
-      v-if="confirmedDestinations.length > 0"
-      label="Confirm Trip"
-      class="q-mt-md"
-      @click="rideConfirmed = true"
     />
     <q-btn
       v-if="confirmedDestinations.length > 0 && routeToUse"
@@ -70,7 +70,7 @@
 <script>
 import MapComponent from '../components/MapComponent.vue'
 import { NominatimJS } from 'nominatim-js'
-import { notifyHandler } from 'src/misc/helpers'
+import { notifyHandler, sleep } from 'src/misc/helpers'
 
 export default {
   name: 'IndexPage',
@@ -104,6 +104,25 @@ export default {
         console.log('getting userCoords: ', this.userCoords_)
         return this.userCoords_
       }
+    },
+    confirmTripLabel() {
+      const defaultLabel = 'Confirm Trip'
+      const changeLabel = 'Confirm Trip Change'
+
+      if (this.confirmedDestinations.length > 0 && !this.routeToUse) {
+        return defaultLabel
+      } else if (
+        this.confirmedDestinations.length > 0 &&
+        this.routeToUse &&
+        //minus 1 as the `inputWaypoints` also contain the source location, but we're
+        //trying to compare the destinations
+        this.routeToUse.inputWaypoints.length - 1 < this.confirmedDestinations.length
+      ) {
+        return changeLabel
+      } else {
+        return defaultLabel
+      }
+      
     },
   },
   methods: {
@@ -154,8 +173,20 @@ export default {
       console.log('set route to use: ', route)
       this.routeToUse = route
     },
+    async confirmTrip() {
+      if (this.rideConfirmed) {
+        //ride already been confirmed so we're adding/removing a destination
+        this.rideConfirmed = false
+        await sleep(500)  //enough delay so that the MapComponent can unmount/mount
+        this.rideConfirmed = true
+      } else {
+        this.rideConfirmed = true
+      }
+      
+    },
     orderRide() {
-      console.log('Ordering ride... TODO')
+      console.log('Ordering ride with route: ', this.routeToUse)
+      console.log('TODO')
     },
   },
 }
