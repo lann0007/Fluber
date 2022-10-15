@@ -108,11 +108,14 @@ export default {
       })
       .addTo(this.map)
 
-      //wait to finish calculations then grab the selected route
-      await sleep(1000)
+      let route = null
+      //await this call so that `route` will be defined before moving on
+      await this.ensureRouteDefined(resp).then(() => {
+        route = _.cloneDeep(resp._selectedRoute)
+      })
 
       //clone so can mutate the data affecting original variable
-      let route = _.cloneDeep(resp._selectedRoute)
+      // let route = _.cloneDeep(resp._selectedRoute)
       for (let i = 0; i < this.destinations.length; i++) {
         //array access of `waypoints` is plus 1 as as the first waypoint is the source, which is not in `destinations`
         route.waypoints[i+1].display_name = this.destinations[i].display_name
@@ -128,6 +131,33 @@ export default {
       //emit a vue event to tell parent component about route
       this.$emit('routeToUse', route)
     },
+    /**
+     * Promise-based function that ensures workflow is defined, such that we don't
+     * access undefined, which can prevent the page from loading
+     * source: https://codepen.io/eanbowman/pen/jxqKjJ?editors=0010, https://gitlab.com/ternandsparrow/paratoo-fdcp/-/blob/develop/paratoo-webapp/src/pages/Workflow.vue#L760
+     */
+    ensureRouteDefined(route) {
+      const timeout = 1000000 // 1000000ms = 1000 seconds
+      const start = Date.now()
+      return new Promise(waitForRoute)
+
+      function waitForRoute(resolve, reject) {
+        let routeIsDefined = false
+        try {
+          routeIsDefined = route !== undefined && Object.keys(route).includes('_selectedRoute')
+        } catch {
+          routeIsDefined = false
+        }
+
+        if (routeIsDefined) {
+          resolve(route)
+        } else if (timeout && Date.now() - start >= timeout) {
+          reject(new Error('timeout'))
+        } else {
+          setTimeout(waitForRoute.bind(this, resolve, reject), 30)
+        }
+      }
+    }
   }
 }
 </script>
