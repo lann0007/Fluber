@@ -4,10 +4,12 @@
   https://deepinder.me/creating-a-real-time-chat-app-with-vue-socket-io-and-nodejs-2
 */
 
+const c = require('./constants')
 const app = require('express')()
 const http = require('http').createServer(app)
 const io = require('socket.io')(http, {
   cors: {
+    //TODO from `.env`
     origins: ['http://localhost:8080']
   }
 })
@@ -63,7 +65,7 @@ io.use(async (socket, next) => {
   try {
     //if token is not valid, axios call with throw error for us to catch
     //TODO Strapi API from `.env`
-    await axios.get('http://localhost:1337/api/users/me', {
+    await axios.get(`${c.coreApiBaseUrl}/api/users/me`, {
       headers: {
         Authorization: `Bearer ${token}`
       }
