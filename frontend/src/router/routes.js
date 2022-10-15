@@ -12,6 +12,22 @@ const routes = [
           requiresLoggedIn: true
         }
       },
+      //TODO don't allow navigation to here if already driver
+      {
+        path: '/driver-signup', component: () => import('pages/DriverSignup.vue'), meta: {
+          requiresLoggedIn: true
+        }
+      },
+      {
+        path: '/chat', component: () => import('pages/Chat.vue'), meta: {
+          requiresLoggedIn: true
+        }
+      },
+      {
+        path: '/ride-history', component: () => import('pages/RideHistory.vue'), meta: {
+          requiresLoggedIn: true
+        }
+      }
     ]
   },
 

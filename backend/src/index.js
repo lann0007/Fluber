@@ -91,8 +91,10 @@ async function initPerms({ publicRole, authenticatedRole, driverRole }) {
 
   //need to be to `populate` relations in `user`
   //  - for: `upload.content-api.find`, `plugin::users-permissions.role.find`, `api::driver-profile.driver-profile.find`
-  //TODO this will allow finding of all roles; we wan't to only allow a user to get *their* role
-  const sharedPerms = [
+  //TODO make sure actions that can affect other users are only allowed to be performed
+  //  on the logged-in user's data, e.g., they should only be able to update *their*
+  //  `user` and/or `driver` data, and no one elses
+  const perms = [
     {
       roles: [authenticatedRole, driverRole],
       api: 'plugin::users-permissions.user',
@@ -112,10 +114,26 @@ async function initPerms({ publicRole, authenticatedRole, driverRole }) {
     {
       roles: [driverRole],
       api: 'api::driver-profile.driver-profile',
+      actions: ['find', 'update']
+    },
+    {
+      roles: [authenticatedRole],
+      api: 'api::driver-profile.driver-profile',
+      actions: ['create']
+    },
+    {
+      roles: [authenticatedRole],
+      api: 'plugin::users-permissions.role',
+      actions: ['find']
+    },
+    {
+      roles: [authenticatedRole, driverRole],
+      api: 'plugin::users-permissions.user',
+      //TODO change to `findOne` - right now messaging requires a full list of users to select from, but that will change to select a particular user from their trip history (thus we just need `findOne`)
       actions: ['find']
     }
   ]
-  for (const perm of sharedPerms) {
+  for (const perm of perms) {
     for (const role of perm.roles) {
       await initPerm(exitingPermissions, perm.api, perm.actions, role)
     }

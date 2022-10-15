@@ -40,7 +40,7 @@ export default route(function (/* { store, ssrContext } */) {
       const isLoggedIn = !!authStore.user
       console.log('isLoggedIn? ', isLoggedIn)
       if (!isLoggedIn) {
-        notifyHandler('negative', 'Login required')
+        notifyHandler('negative', `Login required to access path '${to.fullPath}'`)
         Router.push('/login')
       }
       return true

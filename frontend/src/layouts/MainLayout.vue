@@ -52,6 +52,7 @@ import { defineComponent, ref } from 'vue'
 import EssentialLink from 'components/EssentialLink.vue'
 import { useAuthStore } from 'src/stores/auth'
 import { notifyHandler } from 'src/misc/helpers'
+import SocketioService from '../services/socketio.service.js'
 
 const linksList = [
   {
@@ -59,6 +60,12 @@ const linksList = [
     caption: 'Main page',
     icon: 'home',
     link: '/'
+  },
+  {
+    title: 'Ride History',
+    caption: 'Past rides',
+    icon: 'directions_car',
+    link: '/#/ride-history'
   }
 ]
 
@@ -80,11 +87,31 @@ export default defineComponent({
       authStore
     }
   },
+  mounted() {
+    this.openMessageSocket()
+  },
+  updated() {
+    this.openMessageSocket()
+  },
   methods: {
     doLogout() {
       this.$router.push('/login')
       this.authStore.doLogout()      
       notifyHandler('positive', 'Successfully logged out')      
+    },
+    openMessageSocket() {
+      console.log('openMessageSocket()')
+      if(!SocketioService.socketIsOpen()) {
+        SocketioService.setupSocketConnection(this.authStore.authToken, this.authStore.user)
+        SocketioService.subscribeToMessages((err, data) => {
+          // this.messages.push(data)
+          this.msgStore.addMessage({
+            message,
+            id: this.authStore.user.id,
+            name: this.authStore.user.username
+          })
+        })
+      }
     }
   }
 })
