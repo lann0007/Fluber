@@ -77,8 +77,9 @@
 <script>
 import MapComponent from '../components/MapComponent.vue'
 import { NominatimJS } from 'nominatim-js'
-import { notifyHandler, sleep } from 'src/misc/helpers'
+import { notifyHandler, sleep, ensureVariableDefined } from 'src/misc/helpers'
 import SocketioService from '../services/socketio.service.js'
+import { Loading } from 'quasar'
 
 export default {
   name: 'IndexPage',
@@ -148,6 +149,9 @@ export default {
         },
         (err) => {
           console.error('navigator experienced error watching position: ', err)
+          if (err.code === 1) {
+            notifyHandler('negative', 'Failed to get location, please ensure you have it enabled and have given permission')
+          }
         }
       )
     },
@@ -189,6 +193,20 @@ export default {
       this.routeToUse = route
     },
     async confirmTrip() {
+      Loading.show()
+      let returnEarly = false
+      await ensureVariableDefined(
+        this.userCoords,
+        (coords) => !!coords,
+        5000
+      )
+      .catch(err => {
+        console.error(err)
+        notifyHandler('negative', 'We\'re having trouble getting your location. Please try again.')
+        Loading.hide()
+        returnEarly = true
+      })
+      if (returnEarly) return
       if (this.rideConfirmed) {
         //ride already been confirmed so we're adding/removing a destination
         this.rideConfirmed = false
@@ -197,7 +215,7 @@ export default {
       } else {
         this.rideConfirmed = true
       }
-      
+      Loading.hide()
     },
     orderRide() {
       console.log('Ordering ride with route: ', this.routeToUse)
