@@ -8,6 +8,7 @@ import { notifyHandler } from 'src/misc/helpers'
 import { useMsgStore } from 'src/stores/msg'
 import { useAuthStore } from 'src/stores/auth'
 import { useEphemeralStore } from 'src/stores/ephemeral'
+import * as c from 'src/misc/constants'
 
 class SocketioService {
   socket
@@ -18,8 +19,7 @@ class SocketioService {
 
   setupSocketConnection(token, user) {
     console.log('setting up socket connection with token: ', token)
-    //TODO grab from `.env` instead
-    this.socket = io('http://localhost:3000', {
+    this.socket = io(c.websocketServerBaseUrl, {
       auth: {
         token: token,
         user: user
