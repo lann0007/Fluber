@@ -25,7 +25,7 @@ import { LMap } from '@vue-leaflet/vue-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { Loading } from 'quasar'
-import { sleep } from '../misc/helpers'
+import { sleep, ensureVariableDefined } from '../misc/helpers'
 import _ from 'lodash'
 import { NominatimJS } from 'nominatim-js'
 
@@ -110,7 +110,11 @@ export default {
 
       let route = null
       //await this call so that `route` will be defined before moving on
-      await this.ensureRouteDefined(resp).then(() => {
+      await ensureVariableDefined(
+        resp,
+        (route) => route !== undefined && Object.keys(route).includes('_selectedRoute'),
+        10000 //timeout in ms
+      ).then(() => {
         route = _.cloneDeep(resp._selectedRoute)
       })
 
@@ -131,33 +135,6 @@ export default {
       //emit a vue event to tell parent component about route
       this.$emit('routeToUse', route)
     },
-    /**
-     * Promise-based function that ensures workflow is defined, such that we don't
-     * access undefined, which can prevent the page from loading
-     * source: https://codepen.io/eanbowman/pen/jxqKjJ?editors=0010, https://gitlab.com/ternandsparrow/paratoo-fdcp/-/blob/develop/paratoo-webapp/src/pages/Workflow.vue#L760
-     */
-    ensureRouteDefined(route) {
-      const timeout = 1000000 // 1000000ms = 1000 seconds
-      const start = Date.now()
-      return new Promise(waitForRoute)
-
-      function waitForRoute(resolve, reject) {
-        let routeIsDefined = false
-        try {
-          routeIsDefined = route !== undefined && Object.keys(route).includes('_selectedRoute')
-        } catch {
-          routeIsDefined = false
-        }
-
-        if (routeIsDefined) {
-          resolve(route)
-        } else if (timeout && Date.now() - start >= timeout) {
-          reject(new Error('timeout'))
-        } else {
-          setTimeout(waitForRoute.bind(this, resolve, reject), 30)
-        }
-      }
-    }
   }
 }
 </script>

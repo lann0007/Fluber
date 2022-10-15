@@ -46,3 +46,37 @@ export function notifyHandler(type, msg, err) {
 export function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
+
+/**
+ * Promise-based function that ensures workflow is defined, such that we don't
+ * access undefined, which can prevent the page from loading
+ * source: https://codepen.io/eanbowman/pen/jxqKjJ?editors=0010, https://gitlab.com/ternandsparrow/paratoo-fdcp/-/blob/develop/paratoo-webapp/src/pages/Workflow.vue#L760
+ * 
+ * @param {*} variable the variable we're checking
+ * @param {Function} comparator anonymous function that does some check on the `variable`
+ * and returns a boolean
+ * @param {Number} timeout timeout in milliseconds
+ * 
+ * @returns resolved or rejected promise
+ */
+export function ensureVariableDefined(variable, comparator, timeout) {
+  const start = Date.now()
+  return new Promise(waitForVariable)
+
+  function waitForVariable(resolve, reject) {
+    let variableIsDefined = false
+    try {
+      variableIsDefined = comparator(variable)
+    } catch {
+      variableIsDefined = false
+    }
+
+    if (variableIsDefined) {
+      resolve(variable)
+    } else if (timeout && Date.now() - start >= timeout) {
+      reject(new Error('timeout'))
+    } else {
+      setTimeout(waitForVariable.bind(this, resolve, reject), 30)
+    }
+  }
+}
