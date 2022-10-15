@@ -75,7 +75,7 @@ export default {
       //need a slight delay for data to be ready
       Loading.show()
       await sleep(500)
-      this.routeToDestination()
+      await this.routeToDestination()
       Loading.hide()
     },
     async routeToDestination() {
@@ -89,7 +89,7 @@ export default {
       }
 
       // http://www.liedman.net/leaflet-routing-machine/api/
-      const resp = L.Routing.control({
+      const resp = await L.Routing.control({
         waypoints: waypointsArr
       })
       .addTo(this.map)
