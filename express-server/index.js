@@ -47,6 +47,11 @@ io.on('connection', (socket) => {
       status: 'ok'
     })
   })
+
+  socket.on('orderRide', ({ route, user }) => {
+    console.log('server got a request with route: ', route, '\nfrom user: ', user)
+    socket.broadcast.emit('rideRequest', {route, user})
+  })
 })
 
 //use Strapi to verify token - this method is a bit of a workaround, as it should be

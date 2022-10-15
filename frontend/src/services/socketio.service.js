@@ -6,10 +6,14 @@
 import { io } from 'socket.io-client'
 import { notifyHandler } from 'src/misc/helpers'
 import { useMsgStore } from 'src/stores/msg'
+import { useAuthStore } from 'src/stores/auth'
+import { useEphemeralStore } from 'src/stores/ephemeral'
 
 class SocketioService {
   socket
   msgStore = useMsgStore()
+  authStore = useAuthStore()
+  ephemeralStore = useEphemeralStore()
   constructor() { }
 
   setupSocketConnection(token, user) {
@@ -52,6 +56,21 @@ class SocketioService {
     console.log('socket sending msg: ', message)
     console.log('socket? ', !!this.socket)
     if (this.socket) this.socket.emit('message', { message, roomName }, cb)
+  }
+
+  subscribeToRideRequest(cb) {
+    if (!this.socket) return(true)
+    this.socket.on('rideRequest', request => {
+      console.log('received ride request: ', request)
+      notifyHandler('info', `New ride request from ${request.user.username}`)
+      this.ephemeralStore.addRideRequest(request)
+      return cb(null, request)
+    })
+  }
+
+  requestRide({route}) {
+    console.log('socketio service requestRide()', this.socket)
+    if (this.socket) this.socket.emit('orderRide', { route, user: this.authStore.user })
   }
 }
 

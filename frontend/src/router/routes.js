@@ -27,6 +27,12 @@ const routes = [
         path: '/ride-history', component: () => import('pages/RideHistory.vue'), meta: {
           requiresLoggedIn: true
         }
+      },
+      {
+        path: '/driver', component: () => import('pages/Driver.vue'), meta: {
+          requiresLoggedIn: true,
+          requiresDriver: true,
+        }
       }
     ]
   },

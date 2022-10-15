@@ -26,6 +26,8 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { Loading } from 'quasar'
 import { sleep } from '../misc/helpers'
+import _ from 'lodash'
+import { NominatimJS } from 'nominatim-js'
 
 export default {
   components: {
@@ -39,6 +41,11 @@ export default {
     userCoords: {
       type: Object,
       required: true
+    },
+    //flag used to modify some behaviours slightly when it's a driver using the component
+    isDriverMode: {
+      type: Boolean,
+      default: false,
     }
   },
   beforeMount() {
@@ -79,13 +86,20 @@ export default {
       Loading.hide()
     },
     async routeToDestination() {
-      const waypointsArr = []      
+      const waypointsArr = []
       waypointsArr.push(
-        //start at user's location
+        //start at user's/driver's location
+        //driver has the user's route, so this will add their location to the beginning
+        //  too, creating a route from the driver to the user
         L.latLng(this.userCoords.lat, this.userCoords.lng)
       )
       for (const destination of this.destinations) {
-        waypointsArr.push(L.latLng(destination.lat, destination.lon))
+        if (this.isDriverMode) {
+          //route driver receives is formatted slightly differently
+          waypointsArr.push(L.latLng(destination.latLng.lat, destination.latLng.lng))
+        } else {
+          waypointsArr.push(L.latLng(destination.lat, destination.lon))
+        }
       }
 
       // http://www.liedman.net/leaflet-routing-machine/api/
@@ -96,7 +110,20 @@ export default {
 
       //wait to finish calculations then grab the selected route
       await sleep(1000)
-      const route = resp._selectedRoute
+
+      //clone so can mutate the data affecting original variable
+      let route = _.cloneDeep(resp._selectedRoute)
+      for (let i = 0; i < this.destinations.length; i++) {
+        //array access of `waypoints` is plus 1 as as the first waypoint is the source, which is not in `destinations`
+        route.waypoints[i+1].display_name = this.destinations[i].display_name
+      }
+      //now resolve `userCoords` to a location
+      const resolvedUserLocation = await NominatimJS.search({
+        //TODO add 'country' param (derive from current location / source location)
+        q: `${this.userCoords.lat}, ${this.userCoords.lng}`,
+      })
+      //`resolvedUserLocation` returns array, but assume there's only 1
+      route.waypoints[0].display_name = resolvedUserLocation[0].display_name
 
       //emit a vue event to tell parent component about route
       this.$emit('routeToUse', route)

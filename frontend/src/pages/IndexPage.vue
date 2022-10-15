@@ -78,6 +78,7 @@
 import MapComponent from '../components/MapComponent.vue'
 import { NominatimJS } from 'nominatim-js'
 import { notifyHandler, sleep } from 'src/misc/helpers'
+import SocketioService from '../services/socketio.service.js'
 
 export default {
   name: 'IndexPage',
@@ -161,6 +162,7 @@ export default {
 
       //use Nominatim API to translate search query into coordinates
       const resp = await NominatimJS.search({
+        //TODO add 'country' param (derive from current location / source location)
         q: this.destinationAddress
       })
       console.log('resp: ', resp)
@@ -190,7 +192,7 @@ export default {
       if (this.rideConfirmed) {
         //ride already been confirmed so we're adding/removing a destination
         this.rideConfirmed = false
-        await sleep(500)  //enough delay so that the MapComponent can unmount/mount
+        await sleep(1000)  //enough delay so that the MapComponent can unmount/mount
         this.rideConfirmed = true
       } else {
         this.rideConfirmed = true
@@ -199,7 +201,7 @@ export default {
     },
     orderRide() {
       console.log('Ordering ride with route: ', this.routeToUse)
-      console.log('TODO')
+      SocketioService.requestRide({ route: this.routeToUse })
     },
   },
 }
