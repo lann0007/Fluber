@@ -15,13 +15,17 @@
     @ready="makeMapRef()"
   >
     <!-- put other leaflet elements here -->
+    <!-- if nothing is in here, the map will fail to load in production - so we add the user's location marker here, rather than in `makeMapRef()` - see: https://github.com/vue-leaflet/vue-leaflet/issues/138 -->
+    <l-marker :lat-lng="[userCoords.lat, userCoords.lng]">
+      <l-tooltip>Your location</l-tooltip>
+    </l-marker>
   </l-map>
   <!-- NOTE: this div might show for some time before the location API can get the location -->
   <h2 v-else>Waiting for GPS</h2>
 </template>
 
 <script>
-import { LMap } from '@vue-leaflet/vue-leaflet'
+import { LMap, LMarker, LTooltip } from '@vue-leaflet/vue-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { Loading } from 'quasar'
@@ -32,6 +36,8 @@ import { NominatimJS } from 'nominatim-js'
 export default {
   components: {
     LMap,
+    LMarker,
+    LTooltip,
   },
   props: {
     destinations: {
@@ -76,8 +82,6 @@ export default {
       L.tileLayer(this.url, {
         attribution: this.attribution
       }).addTo(this.map)
-
-      L.marker(this.userCoords).addTo(this.map)
 
       //need a slight delay for data to be ready
       Loading.show()
