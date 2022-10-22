@@ -1,3 +1,7 @@
+<!-- <script>
+import { notifyHandler } from 'src/misc/helpers'
+</script> -->
+
 <template>
   <q-page class="column items-center">
     <h1>Fluber Home</h1>
@@ -9,13 +13,20 @@
       laoreet sagittis, eros ante suscipit ipsum, sit amet porta magna magna at odio. Vivamus at odio mi. Praesent eu
       pharetra massa. Aliquam ipsum nulla, vehicula id gravida eget, interdum at metus. Proin placerat nunc eu nisl
       auctor consequat.</p>
+    <button @click="doPush();"><label>Push Notification Test</label></button>
   </q-page>
 </template>
 
 <script>
 import { defineComponent } from 'vue'
+import { notifyHandler } from 'src/misc/helpers'
 
 export default defineComponent({
-  name: 'IndexPage'
+  name: 'IndexPage',
+  methods: {
+    async doPush() {
+      notifyHandler('info', 'Test Push Notification', null, true)
+    }
+  }
 })
 </script>
