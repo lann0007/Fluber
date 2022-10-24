@@ -1,1 +1,2 @@
-export const coreApiBaseUrl = 'http://localhost:1337'  //TODO derive from env
+export const coreApiBaseUrl = process.env.CORE_API_BASE_URL
+export const websocketServerBaseUrl = process.env.WEBSOCKET_SERVER_BASE_URL

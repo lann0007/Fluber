@@ -52,6 +52,7 @@ import { defineComponent, ref } from 'vue'
 import EssentialLink from 'components/EssentialLink.vue'
 import { useAuthStore } from 'src/stores/auth'
 import { notifyHandler } from 'src/misc/helpers'
+import SocketioService from '../services/socketio.service.js'
 
 const linksList = [
   {
@@ -59,6 +60,18 @@ const linksList = [
     caption: 'Main page',
     icon: 'home',
     link: '/'
+  },
+  {
+    title: 'Ride History',
+    caption: 'Past rides',
+    icon: 'history',
+    link: '/#/ride-history'
+  },
+  {
+    title: 'Driver Hub',
+    caption: 'Ride requests, etc.',
+    icon: 'directions_car',
+    link: '/#/driver'
   }
 ]
 
@@ -80,11 +93,39 @@ export default defineComponent({
       authStore
     }
   },
+  mounted() {
+    this.openMessageSocket()
+  },
+  updated() {
+    this.openMessageSocket()
+  },
   methods: {
     doLogout() {
       this.$router.push('/login')
       this.authStore.doLogout()      
       notifyHandler('positive', 'Successfully logged out')      
+    },
+    openMessageSocket() {
+      console.log('openMessageSocket()')
+      if(!SocketioService.socketIsOpen()) {
+        SocketioService.setupSocketConnection(this.authStore.authToken, this.authStore.user)
+        SocketioService.subscribeToMessages((err, data) => {
+          // this.messages.push(data)
+          this.msgStore.addMessage({
+            message,
+            id: this.authStore.user.id,
+            name: this.authStore.user.username
+          })
+        })
+
+        if (this.authStore && this.authStore.user && Object.keys(this.authStore.user).includes('driverProfile')) {
+          console.log('user is driver, subscribing to ride requests')
+          SocketioService.subscribeToRideRequest((err, data) => {
+            if (err) console.error('err: ', err)
+            if (data) console.log('data: ', data)
+          })
+        }
+      }
     }
   }
 })

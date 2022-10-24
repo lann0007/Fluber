@@ -12,11 +12,18 @@
   },
   "dependencies": {
     "@quasar/extras": "^1.0.0",
+    "@vue-leaflet/vue-leaflet": "^0.6.1",
     "axios": "^0.21.1",
     "core-js": "^3.6.5",
+    "cross-fetch": "^3.1.5",
+    "dotenv": "^16.0.3",
+    "leaflet": "^1.9.1",
+    "leaflet-routing-machine": "^3.2.12",
+    "nominatim-js": "^1.0.10",
     "pinia": "^2.0.11",
     "pinia-plugin-persistedstate": "^2.2.0",
     "quasar": "^2.6.0",
+    "socket.io-client": "^4.5.2",
     "vue": "^3.0.0",
     "vue-router": "^4.0.0"
   },

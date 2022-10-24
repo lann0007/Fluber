@@ -29,8 +29,10 @@ export default route(function (/* { store, ssrContext } */) {
   })
 
   Router.beforeEach(
-    async (to) => {
+    async (to, from) => {
       const authStore = useAuthStore()
+
+      //check for auth requirements of route
       const isRequiresAuth = to.matched.some(
         (r) => r.meta.requiresLoggedIn,
       )
@@ -43,6 +45,22 @@ export default route(function (/* { store, ssrContext } */) {
         notifyHandler('negative', `Login required to access path '${to.fullPath}'`)
         Router.push('/login')
       }
+
+      //check for driver requirements of route
+      const isRequiresDriver = to.matched.some(
+        (r) => r.meta.requiresDriver,
+      )
+      if(!isRequiresDriver) {
+        return true
+      }
+      const isDriver = !!(authStore.user && authStore.user.driverProfile)
+      console.log('isDriver? ', isDriver)
+      if(!isDriver) {
+        notifyHandler('negative', `You must be a driver to access path '${to.fullPath}'`)
+        Router.push(from.path)
+      }
+
+      //catch-all return
       return true
     }
   )
