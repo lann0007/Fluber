@@ -53,6 +53,7 @@ import EssentialLink from 'components/EssentialLink.vue'
 import { useAuthStore } from 'src/stores/auth'
 import { notifyHandler } from 'src/misc/helpers'
 import SocketioService from '../services/socketio.service.js'
+import * as c from 'src/misc/constants'
 
 const linksList = [
   {
@@ -92,6 +93,19 @@ export default defineComponent({
       },
       authStore
     }
+  },
+  beforeMount() {
+    window.watsonAssistantChatOptions = {
+      integrationID: c.watsonIntegrationId,
+      region: c.watsonRegion,
+      serviceInstanceID: c.watsonServiceInstanceId,
+      onLoad: function(instance) { instance.render() }
+    };
+    setTimeout(function(){
+      const t=document.createElement('script')
+      t.src = `https://web-chat.global.assistant.watson.appdomain.cloud/versions/${window.watsonAssistantChatOptions.clientVersion || 'latest'}/WatsonAssistantChatEntry.js`
+      document.head.appendChild(t)
+    })
   },
   mounted() {
     this.openMessageSocket()
