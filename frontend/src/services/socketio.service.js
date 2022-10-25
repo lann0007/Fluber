@@ -1,4 +1,4 @@
-/* 
+/*
   based off of:
   https://deepinder.me/creating-a-real-time-chat-app-with-vue-socket-io-and-nodejs
   https://deepinder.me/creating-a-real-time-chat-app-with-vue-socket-io-and-nodejs-2
@@ -46,12 +46,12 @@ class SocketioService {
     if (!this.socket) return(true)
     this.socket.on('message', msg => {
       console.log('message received: ', msg)
-      notifyHandler('info', `New Message from ${msg.name}`)
+      notifyHandler('info', `New Message from ${msg.name}`, null, true)
       this.msgStore.addMessage(msg)
       return cb(null, msg)
     })
   }
-    
+
   sendMessage({message, roomName}, cb) {
     console.log('socket sending msg: ', message)
     console.log('socket? ', !!this.socket)
@@ -62,7 +62,7 @@ class SocketioService {
     if (!this.socket) return(true)
     this.socket.on('rideRequest', request => {
       console.log('received ride request: ', request)
-      notifyHandler('info', `New ride request from ${request.user.username}`)
+      notifyHandler('info', `New ride request from ${request.user.username}`, null, true)
       this.ephemeralStore.addRideRequest(request)
       return cb(null, request)
     })
