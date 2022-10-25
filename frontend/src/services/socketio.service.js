@@ -71,6 +71,8 @@ class SocketioService {
   }
 
   requestRide({route}) {
+    const isLoggedIn = !!this.authStore.user
+    if (!isLoggedIn) throw new Error('You must be logged in to order a ride')
     console.log('socketio service requestRide()', this.socket.id)
     if (this.socket) this.socket.emit('orderRide', { route, user: this.authStore.user, roomName: this.socket.id })
   }

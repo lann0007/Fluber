@@ -259,7 +259,12 @@ export default {
       Loading.hide()
     },
     orderRide() {
-      SocketioService.requestRide({route: this.routeToUse, user: this.id})
+      try {
+        SocketioService.requestRide({route: this.routeToUse, user: this.id})
+      } catch (err) {
+        console.error('err: ', err)
+        notifyHandler('negative', 'Failed to order ride', err)
+      }
       this.rideConfirmed = false
       this.confirmedDestinations.length = 0
       this.searchResults = ""
