@@ -4,14 +4,14 @@
     <!-- TODO sort by closest - i.e., passengers/pickup point is near Driver -->
     <!-- initial summary table w/ not much info -->
     <q-markup-table wrap-cells dense>
-      <thead>
+      <thead v-if="!acceptRide">
         <tr style="font-weight: bold">
           <td>User</td>
           <td>Distance</td>
           <td>Time</td>
         </tr>
       </thead>
-      <tbody>
+      <tbody v-if="!acceptRide">
         <tr v-for="request of ephemeralStore.rideRequests" :key="request">
           <td>
             {{ request.user.username }}
@@ -56,6 +56,28 @@
       </q-card>
     </q-dialog>
   </div>
+  <MapComponent
+    v-if= "acceptRide && !rideBegun"
+    :destinations="viewingMoreRide.route.waypoints"
+    :user-coords="userCoords"
+    :is-driver-mode="true"
+  />
+
+  <MapComponent
+    v-if= "acceptRide && rideBegun"
+    :destinations="viewingMoreRide.route.waypoints"
+    :user-coords="viewingMoreRide.route.waypoints[0].latLng"
+    :is-driver-mode="true"
+  />
+
+  <q-btn v-if="acceptRide"
+    label="Begin Ride"
+    color="secondary"
+    class="q-mt-md"
+    @click="beginRide()"
+    />
+
+  
 </template>
 
 <script>
@@ -91,6 +113,8 @@ export default {
       //when we 'see more', want to keep track of what we're viewing so the modal has
       //access to the data
       viewingMoreRide: null,
+      acceptRide: null,
+      rideBegun: null
     }
   },
   computed: {
@@ -130,11 +154,21 @@ export default {
       //TODO open modal to show more info, map, etc.
     },
     acceptRideRequest() {
+      this.acceptRide = true
       console.log('accepting ride request: ', this.viewingMoreRide)
       socketioService.joinRoom({roomName: this.viewingMoreRide.user,user: this.authStore.user, route: this.viewingMoreRide}, cb =>{
         console.log(cb)
       })
+      
     },
+    beginRide(){
+      this.rideBegun = true
+      console.log(this.viewingMoreRide.route.waypoints[0].latLng )
+      this.userCoords = this.viewingMoreRide.route.waypoints[0].latLng 
+      console.log(this.userCoords)
+      //TODO
+      // socketioService.beginRide({roomName: this.viewingMoreRide.user, user: this.authStore.user, route: this.viewingMoreRide})
+    }
   }
 }
 </script>
