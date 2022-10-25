@@ -117,7 +117,13 @@ export default defineComponent({
             name: this.authStore.user.username
           })
         })
-
+        SocketioService.subscribeToJoinRoom((err,data) =>{
+          this.msgStore.addMessage({
+            message,
+            id: this.authStore.user.id,
+            name: this.authStore.user.username
+          })
+        })
         if (this.authStore && this.authStore.user && Object.keys(this.authStore.user).includes('driverProfile')) {
           console.log('user is driver, subscribing to ride requests')
           SocketioService.subscribeToRideRequest((err, data) => {

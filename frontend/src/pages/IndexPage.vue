@@ -71,7 +71,29 @@
       class="q-mt-md"
       @click="orderRide()"
     />
+    <q-btn v-for="request of locStore.location" :key="request"
+      label="In Progress"
+      color="secondary"
+      class="q-mt-md"
+      @click="showRideProgress(request)"
+    />
+    <q-dialog v-model="requestMoreInfoOpen">
+      <q-card>
+        <q-card-section>
+          <h6 class="q-my-sm">Driver Location Updates</h6>
+          <MapComponent
+            :destinations="viewingMoreRide.route.waypoints"
+            :user-coords="userCoords"
+            :is-driver-mode="true"
+          />
+        </q-card-section>
+        <q-card-actions class="row justify-between">
+          <q-btn flat label="Back" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
+  
 </template>
 
 <script>
@@ -80,9 +102,16 @@ import { NominatimJS } from 'nominatim-js'
 import { notifyHandler, sleep, ensureVariableDefined } from 'src/misc/helpers'
 import SocketioService from '../services/socketio.service.js'
 import { Loading } from 'quasar'
+import { useLocationStore } from 'src/stores/loc'
 
 export default {
   name: 'IndexPage',
+  setup(){
+    const locStore = useLocationStore()
+    return{
+      locStore,
+    }
+  },
   components: {
     MapComponent,
   },
@@ -100,6 +129,8 @@ export default {
       rideConfirmed: false,
       loadingSearch: false,
       userCoords_: null,
+      requestMoreInfoOpen: false,
+      viewingMoreRide: null,
       routeToUse: null,
     }
   },
@@ -112,6 +143,16 @@ export default {
       get() {
         console.log('getting userCoords: ', this.userCoords_)
         return this.userCoords_
+      }
+    },
+    driverCoords:{
+      set(val){
+        console.log('setting driverCoords: ', val)
+        this.driverCoords_ = val
+      },
+      get(){
+        console.log('getting driverCoords: ', this.driverCoords_)
+        return this.driverCoords_
       }
     },
     //FIXME if we add a destination and remove one before the call to `confirmTrip()`,
@@ -218,8 +259,17 @@ export default {
       Loading.hide()
     },
     orderRide() {
-      console.log('Ordering ride with route: ', this.routeToUse)
-      SocketioService.requestRide({ route: this.routeToUse })
+      SocketioService.requestRide({route: this.routeToUse, user: this.id})
+      this.rideConfirmed = false
+      this.confirmedDestinations.length = 0
+      this.searchResults = ""
+    },
+
+    showRideProgress(request){
+      this.viewingMoreRide = request
+      this.requestMoreInfoOpen = true
+      console.log('RECEIVED ROUTE', this.viewingMoreRide.route)
+      this.locStore.location = null
     },
   },
 }

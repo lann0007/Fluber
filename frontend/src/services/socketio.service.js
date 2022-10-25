@@ -9,12 +9,14 @@ import { useMsgStore } from 'src/stores/msg'
 import { useAuthStore } from 'src/stores/auth'
 import { useEphemeralStore } from 'src/stores/ephemeral'
 import * as c from 'src/misc/constants'
+import { useLocationStore } from 'src/stores/loc'
 
 class SocketioService {
   socket
   msgStore = useMsgStore()
   authStore = useAuthStore()
   ephemeralStore = useEphemeralStore()
+  locStore = useLocationStore()
   constructor() { }
 
   setupSocketConnection(token, user) {
@@ -62,15 +64,30 @@ class SocketioService {
     if (!this.socket) return(true)
     this.socket.on('rideRequest', request => {
       console.log('received ride request: ', request)
-      notifyHandler('info', `New ride request from ${request.user.username}`)
+      notifyHandler('info', `New potato request from ${request.user.username}`)
       this.ephemeralStore.addRideRequest(request)
       return cb(null, request)
     })
   }
 
   requestRide({route}) {
-    console.log('socketio service requestRide()', this.socket)
-    if (this.socket) this.socket.emit('orderRide', { route, user: this.authStore.user })
+    console.log('socketio service requestRide()', this.socket.id)
+    if (this.socket) this.socket.emit('orderRide', { route, user: this.authStore.user, roomName: this.socket.id })
+  }
+
+  joinRoom({roomName, user, route}, cb){
+    console.log('trying to connect to the room: ',route,'\n of the sender: ', user)
+    console.log('results from running socketIsOpen() ', this.socketIsOpen())
+    if (this.socket) this.socket.emit('acceptRide', {roomName, user, route}, cb)
+  }
+  subscribeToJoinRoom(cb) {
+    if (this.socket) 
+    this.socket.on('acceptRide', message => {
+      notifyHandler('info', `ride request has been accepted by ${message.name}`)
+      this.locStore.setLocation(message)
+      console.log('FROM THE DRIVER', message.route)
+      return cb(null, message)
+    })    
   }
 }
 

@@ -59,8 +59,11 @@
 </template>
 
 <script>
+import socketioService from 'src/services/socketio.service'
 import { useEphemeralStore } from 'src/stores/ephemeral'
 import MapComponent from '../components/MapComponent.vue'
+import { useAuthStore } from 'src/stores/auth'
+
 
 export default {
   name: 'Driver-page',
@@ -74,10 +77,12 @@ export default {
     this.stopLocationUpdates()
   },
   setup() {
+    const authStore = useAuthStore()
     const ephemeralStore = useEphemeralStore()
     console.log('rideRequests: ', ephemeralStore.rideRequests)
     return {
       ephemeralStore,
+      authStore,
     }
   },
   data() {
@@ -126,7 +131,9 @@ export default {
     },
     acceptRideRequest() {
       console.log('accepting ride request: ', this.viewingMoreRide)
-      console.log('TODO')
+      socketioService.joinRoom({roomName: this.viewingMoreRide.user,user: this.authStore.user, route: this.viewingMoreRide}, cb =>{
+        console.log(cb)
+      })
     },
   }
 }
