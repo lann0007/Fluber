@@ -4,7 +4,8 @@
   "info": {
     "singularName": "driver-profile",
     "pluralName": "driver-profiles",
-    "displayName": "Driver Profile"
+    "displayName": "Driver Profile",
+    "description": ""
   },
   "options": {
     "draftAndPublish": false
@@ -28,12 +29,18 @@
       "required": true
     },
     "identification": {
-      "allowedTypes": [
-        "files"
-      ],
       "type": "media",
       "multiple": false,
-      "required": true
+      "required": true,
+      "allowedTypes": [
+        "files"
+      ]
+    },
+    "driver_ratings": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::driver-rating.driver-rating",
+      "mappedBy": "driver_profile"
     }
   }
 }

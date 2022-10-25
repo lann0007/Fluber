@@ -1,0 +1,26 @@
+{
+  "kind": "collectionType",
+  "collectionName": "passenger_ratings",
+  "info": {
+    "singularName": "passenger-rating",
+    "pluralName": "passenger-ratings",
+    "displayName": "Passenger Rating"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "rating": {
+      "type": "integer",
+      "max": 5,
+      "min": 0
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "passenger_ratings"
+    }
+  }
+}

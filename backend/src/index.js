@@ -90,7 +90,7 @@ async function initPerms({ publicRole, authenticatedRole, driverRole }) {
     })
 
   //need to be to `populate` relations in `user`
-  //  - for: `upload.content-api.find`, `plugin::users-permissions.role.find`, `api::driver-profile.driver-profile.find`
+  //  - for: `upload.content-api.find`, `plugin::users-permissions.role.find`, `api::driver-profile.driver-profile.find`, api::passenger-rating.passenger-rating
   //TODO make sure actions that can affect other users are only allowed to be performed
   //  on the logged-in user's data, e.g., they should only be able to update *their*
   //  `user` and/or `driver` data, and no one elses
@@ -137,6 +137,16 @@ async function initPerms({ publicRole, authenticatedRole, driverRole }) {
       roles: [authenticatedRole, driverRole],
       api: 'api::completed-trip.completed-trip',
       actions: ['create']
+    },
+    {
+      roles: [driverRole],
+      api: 'api::driver-rating:driver-rating',
+      actions: ['create', 'find', 'findOne']
+    },
+    {
+      roles: [authenticatedRole],
+      api: 'api::passenger-rating.passenger-rating',
+      actions: ['create', 'find', 'findOne']
     },
   ]
   for (const perm of perms) {
