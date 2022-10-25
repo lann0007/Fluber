@@ -76,7 +76,12 @@
     class="q-mt-md"
     @click="beginRide()"
     />
-
+    <q-btn v-if="acceptRide && rideBegun"
+    label="End Ride"
+    color="secondary"
+    class="q-mt-md"
+    @click="endRide()"
+    />
   
 </template>
 
@@ -168,6 +173,10 @@ export default {
       console.log(this.userCoords)
       //TODO
       // socketioService.beginRide({roomName: this.viewingMoreRide.user, user: this.authStore.user, route: this.viewingMoreRide})
+    },
+    endRide(){
+      this.rideBegun = false
+      this.acceptRide = false
     }
   }
 }
