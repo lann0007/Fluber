@@ -131,7 +131,13 @@ async function initPerms({ publicRole, authenticatedRole, driverRole }) {
       api: 'plugin::users-permissions.user',
       //TODO change to `findOne` - right now messaging requires a full list of users to select from, but that will change to select a particular user from their trip history (thus we just need `findOne`)
       actions: ['find']
-    }
+    },
+    {
+      //TODO this role should be `admin`, but this has not been implemented so in the meantime we can just have the driver or passenger do it (most likely driver)
+      roles: [authenticatedRole, driverRole],
+      api: 'api::completed-trip.completed-trip',
+      actions: ['create']
+    },
   ]
   for (const perm of perms) {
     for (const role of perm.roles) {

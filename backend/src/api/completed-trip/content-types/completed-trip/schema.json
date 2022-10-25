@@ -1,0 +1,30 @@
+{
+  "kind": "collectionType",
+  "collectionName": "completed_trips",
+  "info": {
+    "singularName": "completed-trip",
+    "pluralName": "completed-trips",
+    "displayName": "Completed Trip",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "trip_id": {
+      "type": "uid",
+      "required": true
+    },
+    "user_driver": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "user_passenger": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user"
+    }
+  }
+}
