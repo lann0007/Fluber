@@ -5,6 +5,7 @@
 */
 
 const c = require('./constants')
+const { v4: uuidv4 } = require('uuid')
 const app = require('express')()
 const http = require('http').createServer(app)
 const io = require('socket.io')(http, {
@@ -57,13 +58,20 @@ io.on('connection', (socket) => {
 
   socket.on('acceptRide', ({roomName, user, route}, callback) =>{
     console.log('server recieved ride acceptance with User object: ', user)
+
+    //ride has started, generate trip ID
+    const tripId = uuidv4()
+    console.log('tripId: ', tripId)
+
     const outgoingMessage = {
       name: user.username,
       route: route,
+      tripId: tripId    //copy for the passenger
     }
     socket.to(roomName.id).emit('acceptRide', outgoingMessage)
     callback({
-      status: 'ok'
+      status: 'ok',
+      tripId: tripId    //copy for the driver
     })
   })
 })
