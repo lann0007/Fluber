@@ -1,0 +1,46 @@
+{
+  "kind": "collectionType",
+  "collectionName": "driver_profiles",
+  "info": {
+    "singularName": "driver-profile",
+    "pluralName": "driver-profiles",
+    "displayName": "Driver Profile",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "firstName": {
+      "type": "string",
+      "required": true
+    },
+    "lastName": {
+      "type": "string",
+      "required": true
+    },
+    "licenseNumber": {
+      "type": "string",
+      "required": true
+    },
+    "vehicleRegistration": {
+      "type": "string",
+      "required": true
+    },
+    "identification": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": [
+        "files"
+      ]
+    },
+    "driver_ratings": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::driver-rating.driver-rating",
+      "mappedBy": "driver_profile"
+    }
+  }
+}
