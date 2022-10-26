@@ -92,6 +92,7 @@ import socketioService from 'src/services/socketio.service'
 import { useEphemeralStore } from 'src/stores/ephemeral'
 import MapComponent from '../components/MapComponent.vue'
 import { useAuthStore } from 'src/stores/auth'
+import { useRideStateStore } from 'src/stores/rideState'
 
 
 export default {
@@ -108,10 +109,12 @@ export default {
   setup() {
     const authStore = useAuthStore()
     const ephemeralStore = useEphemeralStore()
+    const rideStateStore = useRideStateStore()
     console.log('rideRequests: ', ephemeralStore.rideRequests)
     return {
       ephemeralStore,
       authStore,
+      rideStateStore,
     }
   },
   data() {
@@ -158,13 +161,16 @@ export default {
       console.log('seeMoreRide() request: ', request)
       this.requestMoreInfoOpen = true
       this.viewingMoreRide = request
-      //TODO open modal to show more info, map, etc.
     },
     acceptRideRequest() {
       this.acceptRide = true
       console.log('accepting ride request: ', this.viewingMoreRide)
       socketioService.joinRoom({roomName: this.viewingMoreRide.user,user: this.authStore.user, route: this.viewingMoreRide, driverInitialLocation: this.userCoords}, cb =>{
         console.log(cb)
+        //persist the trip ID
+        //TODO clear trip ID after ride has ended
+        this.rideStateStore.setTripId(cb.tripId)
+        console.log('set trip ID: ', this.rideStateStore.getTripIp())
       })
       
     },

@@ -10,6 +10,7 @@ import { useAuthStore } from 'src/stores/auth'
 import { useEphemeralStore } from 'src/stores/ephemeral'
 import * as c from 'src/misc/constants'
 import { useLocationStore } from 'src/stores/loc'
+import { useRideStateStore } from 'src/stores/rideState'
 
 class SocketioService {
   socket
@@ -17,6 +18,7 @@ class SocketioService {
   authStore = useAuthStore()
   ephemeralStore = useEphemeralStore()
   locStore = useLocationStore()
+  rideStateStore = useRideStateStore()
   constructor() { }
 
   setupSocketConnection(token, user) {
@@ -89,8 +91,12 @@ class SocketioService {
         notifyHandler('info', `ride request has been accepted by ${message.name}`)
         this.locStore.setLocation(message.route)
         this.locStore.setDriverLocation(message.driverInitialLocation)
+      //persist the trip ID
+      //TODO clear trip ID after ride has ended
+      this.rideStateStore.setTripId(message.tripId)
         console.log('FROM THE DRIVER', message.route)
-        return cb(null, message)
+      console.log('set trip ID: ', this.rideStateStore.getTripIp())
+      return cb(null, message)
       })
     }       
   }

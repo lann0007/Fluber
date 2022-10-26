@@ -75,6 +75,12 @@
       "type": "relation",
       "relation": "oneToOne",
       "target": "api::driver-profile.driver-profile"
+    },
+    "passenger_ratings": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::passenger-rating.passenger-rating",
+      "mappedBy": "user"
     }
   }
 }
