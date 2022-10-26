@@ -66,7 +66,7 @@ class SocketioService {
     if (!this.socket) return(true)
     this.socket.on('rideRequest', request => {
       console.log('received ride request: ', request)
-      notifyHandler('info', `New potato request from ${request.user.username}`)
+      notifyHandler('info', `New ride request from ${request.user.username}`)
       this.ephemeralStore.addRideRequest(request)
       return cb(null, request)
     })

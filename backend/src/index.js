@@ -90,7 +90,7 @@ async function initPerms({ publicRole, authenticatedRole, driverRole }) {
     })
 
   //need to be to `populate` relations in `user`
-  //  - for: `upload.content-api.find`, `plugin::users-permissions.role.find`, `api::driver-profile.driver-profile.find`, api::passenger-rating.passenger-rating
+  //  - for: `upload.content-api.find`, `plugin::users-permissions.role.find`, `api::driver-profile.driver-profile.find`, api::passenger-rating.passenger-rating, api::completed-trip.completed-trip
   //TODO make sure actions that can affect other users are only allowed to be performed
   //  on the logged-in user's data, e.g., they should only be able to update *their*
   //  `user` and/or `driver` data, and no one elses
@@ -129,14 +129,13 @@ async function initPerms({ publicRole, authenticatedRole, driverRole }) {
     {
       roles: [authenticatedRole, driverRole],
       api: 'plugin::users-permissions.user',
-      //TODO change to `findOne` - right now messaging requires a full list of users to select from, but that will change to select a particular user from their trip history (thus we just need `findOne`)
       actions: ['find']
     },
     {
       //TODO this role should be `admin`, but this has not been implemented so in the meantime we can just have the driver or passenger do it (most likely driver)
       roles: [authenticatedRole, driverRole],
       api: 'api::completed-trip.completed-trip',
-      actions: ['create']
+      actions: ['create', 'find', 'findOne']
     },
     {
       roles: [driverRole],
