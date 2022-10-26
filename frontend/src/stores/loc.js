@@ -4,11 +4,15 @@ import { defineStore } from 'pinia'
 export const useLocationStore = defineStore('loc', {
   state: () => ({
     location: null,
+    driverLocation: null,
   }),
   persist: true,
   getters: {
     getLocation () {
       return state.location
+    },
+    getDriverLocation() {
+      return state.driverLocation
     }
   },
 
@@ -18,6 +22,9 @@ export const useLocationStore = defineStore('loc', {
     },
     clearLocation(){
       this.location = null
+    },
+    setDriverLocation(location) {
+      this.driverLocation = location
     }
   }
 })

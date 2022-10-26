@@ -55,34 +55,36 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
-  </div>
-  <MapComponent
-    v-if= "acceptRide && !rideBegun"
-    :destinations="viewingMoreRide.route.waypoints"
-    :user-coords="userCoords"
-    :is-driver-mode="true"
-  />
 
-  <MapComponent
-    v-if= "acceptRide && rideBegun"
-    :destinations="viewingMoreRide.route.waypoints"
-    :user-coords="viewingMoreRide.route.waypoints[0].latLng"
-    :is-driver-mode="true"
-  />
+    <!-- ride has been accepted but not started -->
+    <MapComponent
+      v-if= "acceptRide && !rideBegun"
+      :destinations="viewingMoreRide.route.waypoints"
+      :user-coords="userCoords"
+      :is-driver-mode="true"
+    />
 
-  <q-btn v-if="acceptRide"
-    label="Begin Ride"
-    color="secondary"
-    class="q-mt-md"
-    @click="beginRide()"
+    <!-- ride has been accepted and started -->
+    <MapComponent
+      v-if= "acceptRide && rideBegun"
+      :destinations="viewingMoreRide.route.waypoints"
+      :user-coords="viewingMoreRide.route.waypoints[0].latLng"
+      :is-driver-mode="true"
+    />
+
+    <q-btn v-if="acceptRide && !rideBegun"
+      label="Begin Ride"
+      color="secondary"
+      class="q-mt-md"
+      @click="beginRide()"
     />
     <q-btn v-if="acceptRide && rideBegun"
-    label="End Ride"
-    color="secondary"
-    class="q-mt-md"
-    @click="endRide()"
+      label="End Ride"
+      color="secondary"
+      class="q-mt-md"
+      @click="endRide()"
     />
-  
+  </div>  
 </template>
 
 <script>
@@ -161,7 +163,7 @@ export default {
     acceptRideRequest() {
       this.acceptRide = true
       console.log('accepting ride request: ', this.viewingMoreRide)
-      socketioService.joinRoom({roomName: this.viewingMoreRide.user,user: this.authStore.user, route: this.viewingMoreRide}, cb =>{
+      socketioService.joinRoom({roomName: this.viewingMoreRide.user,user: this.authStore.user, route: this.viewingMoreRide, driverInitialLocation: this.userCoords}, cb =>{
         console.log(cb)
       })
       
@@ -169,10 +171,11 @@ export default {
     beginRide(){
       this.rideBegun = true
       console.log(this.viewingMoreRide.route.waypoints[0].latLng )
-      this.userCoords = this.viewingMoreRide.route.waypoints[0].latLng 
+      // this.userCoords = this.viewingMoreRide.route.waypoints[0].latLng 
       console.log(this.userCoords)
-      //TODO
-      // socketioService.beginRide({roomName: this.viewingMoreRide.user, user: this.authStore.user, route: this.viewingMoreRide})
+      socketioService.beginRide({passengerId: this.viewingMoreRide.user.id, driverId: this.authStore.user.id, route: this.viewingMoreRide.route}, cb => {
+        console.log(cb)
+      })
     },
     endRide(){
       this.rideBegun = false

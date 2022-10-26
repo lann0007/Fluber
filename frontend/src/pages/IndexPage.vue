@@ -1,7 +1,7 @@
 <!-- TODO error handling -->
 
 <template>
-  <q-page class="q-ma-xl column items-center">
+  <q-page class="q-ma-xl column items-center" v-if="!locStore.location">
     <h1>Fluber Home</h1>
 
     <q-input
@@ -71,27 +71,16 @@
       class="q-mt-md"
       @click="orderRide()"
     />
-    <q-btn v-for="request of locStore.location" :key="request"
-      label="In Progress"
-      color="secondary"
-      class="q-mt-md"
-      @click="showRideProgress(request)"
+  </q-page>
+  <q-page v-else class="q-ma-sm">
+    <h6 class="q-my-sm">Driver Location Updates</h6>
+    <MapComponent
+      v-if="locStore.location"
+      :destinations="locStore.location.route.waypoints"
+      :user-coords="userCoords"
+      :driver-coords="locStore.driverLocation"
+      :is-driver-mode="true"
     />
-    <q-dialog v-model="requestMoreInfoOpen">
-      <q-card>
-        <q-card-section>
-          <h6 class="q-my-sm">Driver Location Updates</h6>
-          <MapComponent
-            :destinations="viewingMoreRide.route.waypoints"
-            :user-coords="userCoords"
-            :is-driver-mode="true"
-          />
-        </q-card-section>
-        <q-card-actions class="row justify-between">
-          <q-btn flat label="Back" v-close-popup />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
   </q-page>
   
 </template>
@@ -130,7 +119,6 @@ export default {
       loadingSearch: false,
       userCoords_: null,
       requestMoreInfoOpen: false,
-      viewingMoreRide: null,
       routeToUse: null,
     }
   },
@@ -270,11 +258,9 @@ export default {
       this.searchResults = ""
     },
 
-    showRideProgress(request){
-      this.viewingMoreRide = request
+    showRideProgress(){
       this.requestMoreInfoOpen = true
-      console.log('RECEIVED ROUTE', this.viewingMoreRide.route)
-      this.locStore.location = null
+      console.log('locStore.location: ', this.locStore.location)
     },
   },
 }

@@ -48,6 +48,11 @@ export default {
       type: Object,
       required: true
     },
+    driverCoords: {
+      type: Object,
+      required: false,
+      default: null,
+    },
     //flag used to modify some behaviours slightly when it's a driver using the component
     isDriverMode: {
       type: Boolean,
@@ -90,13 +95,21 @@ export default {
       Loading.hide()
     },
     async routeToDestination() {
+      console.log('destinations: ', this.destinations)
+      console.log('driverCoords: ', this.driverCoords)
       const waypointsArr = []
-      waypointsArr.push(
-        //start at user's/driver's location
-        //driver has the user's route, so this will add their location to the beginning
-        //  too, creating a route from the driver to the user
-        L.latLng(this.userCoords.lat, this.userCoords.lng)
-      )
+      if (this.driverCoords) {
+        waypointsArr.push(
+          L.latLng(this.driverCoords.lat, this.driverCoords.lng)
+        )
+      } else {
+        waypointsArr.push(
+          //start at user's/driver's location
+          //driver has the user's route, so this will add their location to the beginning
+          //  too, creating a route from the driver to the user
+          L.latLng(this.userCoords.lat, this.userCoords.lng)
+        )
+      }
       for (const destination of this.destinations) {
         if (this.isDriverMode) {
           //route driver receives is formatted slightly differently

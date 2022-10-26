@@ -131,6 +131,10 @@ export default defineComponent({
             if (data) console.log('data: ', data)
           })
         }
+        SocketioService.subscribeToRideHasBegun((err, data) => {
+          if (err) console.error('err: ', err)
+          if (data) console.log('data: ', data)
+        })
       }
     }
   }

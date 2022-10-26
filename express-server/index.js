@@ -55,13 +55,27 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('rideRequest', {route, user, roomName})
   })
 
-  socket.on('acceptRide', ({roomName, user, route}, callback) =>{
+  socket.on('acceptRide', ({roomName, user, route, driverInitialLocation}, callback) =>{
     console.log('server recieved ride acceptance with User object: ', user)
     const outgoingMessage = {
       name: user.username,
       route: route,
+      driverInitialLocation: driverInitialLocation,
     }
     socket.to(roomName.id).emit('acceptRide', outgoingMessage)
+    callback({
+      status: 'ok'
+    })
+  })
+
+  socket.on('beginRide', ({passengerId, driverId, route}, callback) => {
+    console.log('driver emit beingRide event. passengerId: ', passengerId, '. driverId: ', driverId, '. route: ', route)
+    const outgoingMessage = {
+      passengerId: passengerId,
+      driverId: driverId,
+      route: route,
+    }
+    socket.to(passengerId).emit('rideHasBegun', outgoingMessage)
     callback({
       status: 'ok'
     })

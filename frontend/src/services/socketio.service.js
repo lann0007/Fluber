@@ -77,19 +77,37 @@ class SocketioService {
     if (this.socket) this.socket.emit('orderRide', { route, user: this.authStore.user, roomName: this.socket.id })
   }
 
-  joinRoom({roomName, user, route}, cb){
+  joinRoom({roomName, user, route, driverInitialLocation}, cb){
     console.log('trying to connect to the room: ',route,'\n of the sender: ', user)
     console.log('results from running socketIsOpen() ', this.socketIsOpen())
-    if (this.socket) this.socket.emit('acceptRide', {roomName, user, route}, cb)
+    if (this.socket) this.socket.emit('acceptRide', {roomName, user, route, driverInitialLocation}, cb)
   }
   subscribeToJoinRoom(cb) {
-    if (this.socket) 
-    this.socket.on('acceptRide', message => {
-      notifyHandler('info', `ride request has been accepted by ${message.name}`)
-      this.locStore.setLocation(message)
-      console.log('FROM THE DRIVER', message.route)
-      return cb(null, message)
-    })    
+    if (this.socket) {
+      this.socket.on('acceptRide', message => {
+        console.log('message: ', message)
+        notifyHandler('info', `ride request has been accepted by ${message.name}`)
+        this.locStore.setLocation(message.route)
+        this.locStore.setDriverLocation(message.driverInitialLocation)
+        console.log('FROM THE DRIVER', message.route)
+        return cb(null, message)
+      })
+    }       
+  }
+
+  beginRide({passengerId, driverId, route}, cb) {
+    console.log('beingRide passengerId: ', passengerId, '. driverId: ', driverId, '. route: ', route)
+    if(this.socket) {
+      this.socket.emit('beginRide', {passengerId, driverId, route}, cb)
+    }
+  }
+
+  subscribeToRideHasBegun(cb) {
+    if (this.socket) {
+      this.socket.on('rideHasBegun', message => {
+        console.log('rideHasBegun message: ', message)
+      })
+    }
   }
 }
 
