@@ -20,6 +20,10 @@ Frontend's `.env` might look something like:
 ```
 CORE_API_BASE_URL = 'http://localhost:1337'
 WEBSOCKET_SERVER_BASE_URL = 'http://localhost:3000'
+
+WATSON_INTEGRATION_ID = 'some-integration-id'
+WATSON_REGION = 'au-syd'
+WATSON_SERVICE_INSTANCE_ID = 'some-instance-id'
 ```
 
 The Express Server's `.env` might look something like:
