@@ -169,7 +169,6 @@ export default {
       socketioService.joinRoom({roomName: this.viewingMoreRide.user,user: this.authStore.user, route: this.viewingMoreRide, driverInitialLocation: this.userCoords}, cb =>{
         console.log(cb)
         //persist the trip ID
-        //TODO clear trip ID after ride has ended
         this.rideStateStore.setTripId(cb.tripId)
         console.log('set trip ID: ', this.rideStateStore.getTripIp())
       })

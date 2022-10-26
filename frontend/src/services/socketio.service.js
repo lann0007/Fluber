@@ -92,7 +92,6 @@ class SocketioService {
         this.locStore.setLocation(message.route)
         this.locStore.setDriverLocation(message.driverInitialLocation)
         //persist the trip ID
-        //TODO clear trip ID after ride has ended
         this.rideStateStore.setTripId(message.tripId)
         console.log('FROM THE DRIVER', message.route)
         console.log('set trip ID: ', this.rideStateStore.getTripIp())
