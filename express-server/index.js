@@ -5,6 +5,7 @@
 */
 
 const c = require('./constants')
+const { v4: uuidv4 } = require('uuid')
 const app = require('express')()
 const http = require('http').createServer(app)
 const io = require('socket.io')(http, {
@@ -50,9 +51,55 @@ io.on('connection', (socket) => {
     })
   })
 
-  socket.on('orderRide', ({ route, user }) => {
-    console.log('server got a request with route: ', route, '\nfrom user: ', user)
-    socket.broadcast.emit('rideRequest', {route, user})
+  socket.on('orderRide', ({ route, user, roomName }) => {
+    console.log('server got a request with route: ', route, '\nfrom user: ', user, '\n with a socket id of ', roomName)
+    socket.broadcast.emit('rideRequest', {route, user, roomName})
+  })
+
+  socket.on('acceptRide', ({roomName, user, route, driverInitialLocation}, callback) =>{
+    console.log('server recieved ride acceptance with User object: ', user)
+
+    //ride has started, generate trip ID
+    const tripId = uuidv4()
+    console.log('tripId: ', tripId)
+
+    const outgoingMessage = {
+      name: user.username,
+      route: route,
+      driverInitialLocation: driverInitialLocation,
+      tripId: tripId    //copy for the passenger
+    }
+    socket.to(roomName.id).emit('acceptRide', outgoingMessage)
+    callback({
+      status: 'ok',
+      tripId: tripId    //copy for the driver
+    })
+  })
+
+  socket.on('beginRide', ({passengerId, driverId, route}, callback) => {
+    console.log('driver emit beingRide event. passengerId: ', passengerId, '. driverId: ', driverId, '. route: ', route)
+    const outgoingMessage = {
+      passengerId: passengerId,
+      driverId: driverId,
+      route: route,
+    }
+    socket.to(passengerId).emit('rideHasBegun', outgoingMessage)
+    callback({
+      status: 'ok'
+    })
+  })
+
+  socket.on('endRide', ({passengerId, driverId, route, tripId}, callback) => {
+    const outgoingMessage = {
+      passengerId: passengerId,
+      driverId: driverId,
+      route: route,
+      tripId: tripId,
+    }
+    socket.to(passengerId).emit('rideHasEnded', outgoingMessage)
+    callback({
+      status: 'ok'
+    })
   })
 })
 

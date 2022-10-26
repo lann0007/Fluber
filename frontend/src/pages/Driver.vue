@@ -4,14 +4,14 @@
     <!-- TODO sort by closest - i.e., passengers/pickup point is near Driver -->
     <!-- initial summary table w/ not much info -->
     <q-markup-table wrap-cells dense>
-      <thead>
+      <thead v-if="!acceptRide">
         <tr style="font-weight: bold">
           <td>User</td>
           <td>Distance</td>
           <td>Time</td>
         </tr>
       </thead>
-      <tbody>
+      <tbody v-if="!acceptRide">
         <tr v-for="request of ephemeralStore.rideRequests" :key="request">
           <td>
             {{ request.user.username }}
@@ -55,12 +55,46 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
-  </div>
+
+    <!-- ride has been accepted but not started -->
+    <MapComponent
+      v-if= "acceptRide && !rideBegun"
+      :destinations="viewingMoreRide.route.waypoints"
+      :user-coords="userCoords"
+      :is-driver-mode="true"
+    />
+
+    <!-- ride has been accepted and started -->
+    <MapComponent
+      v-if= "acceptRide && rideBegun"
+      :destinations="viewingMoreRide.route.waypoints"
+      :user-coords="viewingMoreRide.route.waypoints[0].latLng"
+      :is-driver-mode="true"
+    />
+
+    <q-btn v-if="acceptRide && !rideBegun"
+      label="Begin Ride"
+      color="secondary"
+      class="q-mt-md"
+      @click="beginRide()"
+    />
+    <q-btn v-if="acceptRide && rideBegun"
+      label="End Ride"
+      color="secondary"
+      class="q-mt-md"
+      @click="endRide()"
+    />
+  </div>  
 </template>
 
 <script>
+import socketioService from 'src/services/socketio.service'
 import { useEphemeralStore } from 'src/stores/ephemeral'
 import MapComponent from '../components/MapComponent.vue'
+import { useAuthStore } from 'src/stores/auth'
+import { useRideStateStore } from 'src/stores/rideState'
+import axios from 'axios'
+import * as c from 'src/misc/constants'
 
 export default {
   name: 'Driver-page',
@@ -74,10 +108,14 @@ export default {
     this.stopLocationUpdates()
   },
   setup() {
+    const authStore = useAuthStore()
     const ephemeralStore = useEphemeralStore()
+    const rideStateStore = useRideStateStore()
     console.log('rideRequests: ', ephemeralStore.rideRequests)
     return {
       ephemeralStore,
+      authStore,
+      rideStateStore,
     }
   },
   data() {
@@ -86,6 +124,8 @@ export default {
       //when we 'see more', want to keep track of what we're viewing so the modal has
       //access to the data
       viewingMoreRide: null,
+      acceptRide: null,
+      rideBegun: null
     }
   },
   computed: {
@@ -122,12 +162,54 @@ export default {
       console.log('seeMoreRide() request: ', request)
       this.requestMoreInfoOpen = true
       this.viewingMoreRide = request
-      //TODO open modal to show more info, map, etc.
     },
     acceptRideRequest() {
+      this.acceptRide = true
       console.log('accepting ride request: ', this.viewingMoreRide)
-      console.log('TODO')
+      socketioService.joinRoom({roomName: this.viewingMoreRide.user,user: this.authStore.user, route: this.viewingMoreRide, driverInitialLocation: this.userCoords}, cb =>{
+        console.log(cb)
+        //persist the trip ID
+        this.rideStateStore.setTripId(cb.tripId)
+        console.log('set trip ID: ', this.rideStateStore.getTripIp())
+      })
+      
     },
+    beginRide(){
+      this.rideBegun = true
+      console.log(this.viewingMoreRide.route.waypoints[0].latLng )
+      // this.userCoords = this.viewingMoreRide.route.waypoints[0].latLng 
+      console.log(this.userCoords)
+      socketioService.beginRide({passengerId: this.viewingMoreRide.user.id, driverId: this.authStore.user.id, route: this.viewingMoreRide.route}, cb => {
+        console.log(cb)
+      })
+    },
+    endRide(){
+      socketioService.endRide({passengerId: this.viewingMoreRide.user.id, driverId: this.authStore.user.id, route: this.viewingMoreRide.route, tripId: this.rideStateStore.tripId}, cb => {
+        console.log(cb)
+        axios.post(`${c.coreApiBaseUrl}/api/completed-trips`, {
+          data: {
+            trip_id: this.rideStateStore.tripId,
+            user_driver: this.authStore.user.id,
+            user_passenger: this.viewingMoreRide.user.id,
+          }
+        }, {
+          headers: {
+            Authorization: `Bearer ${this.authStore.authToken}`
+          }
+        })
+        .then(resp => {
+          console.log('resp: ', resp)
+          this.rideStateStore.clearTripId()
+          this.ephemeralStore.clearRideRequests()
+
+          this.rideBegun = false
+          this.acceptRide = false
+        })
+        .catch(err => {
+          console.error(err)
+        })        
+      })      
+    }
   }
 }
 </script>

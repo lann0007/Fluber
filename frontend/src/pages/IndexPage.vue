@@ -1,7 +1,7 @@
 <!-- TODO error handling -->
 
 <template>
-  <q-page class="q-ma-xl column items-center">
+  <q-page class="q-ma-xl column items-center" v-if="!locStore.location">
     <h1>Fluber Home</h1>
 
     <q-input
@@ -72,6 +72,17 @@
       @click="orderRide()"
     />
   </q-page>
+  <q-page v-else class="q-ma-sm">
+    <h6 class="q-my-sm">Driver Location Updates</h6>
+    <MapComponent
+      v-if="locStore.location"
+      :destinations="locStore.location.route.waypoints"
+      :user-coords="userCoords"
+      :driver-coords="locStore.driverLocation"
+      :is-driver-mode="true"
+    />
+  </q-page>
+  
 </template>
 
 <script>
@@ -80,9 +91,16 @@ import { NominatimJS } from 'nominatim-js'
 import { notifyHandler, sleep, ensureVariableDefined } from 'src/misc/helpers'
 import SocketioService from '../services/socketio.service.js'
 import { Loading } from 'quasar'
+import { useLocationStore } from 'src/stores/loc'
 
 export default {
   name: 'IndexPage',
+  setup(){
+    const locStore = useLocationStore()
+    return{
+      locStore,
+    }
+  },
   components: {
     MapComponent,
   },
@@ -100,6 +118,7 @@ export default {
       rideConfirmed: false,
       loadingSearch: false,
       userCoords_: null,
+      requestMoreInfoOpen: false,
       routeToUse: null,
     }
   },
@@ -112,6 +131,16 @@ export default {
       get() {
         console.log('getting userCoords: ', this.userCoords_)
         return this.userCoords_
+      }
+    },
+    driverCoords:{
+      set(val){
+        console.log('setting driverCoords: ', val)
+        this.driverCoords_ = val
+      },
+      get(){
+        console.log('getting driverCoords: ', this.driverCoords_)
+        return this.driverCoords_
       }
     },
     //FIXME if we add a destination and remove one before the call to `confirmTrip()`,
@@ -218,8 +247,20 @@ export default {
       Loading.hide()
     },
     orderRide() {
-      console.log('Ordering ride with route: ', this.routeToUse)
-      SocketioService.requestRide({ route: this.routeToUse })
+      try {
+        SocketioService.requestRide({route: this.routeToUse, user: this.id})
+      } catch (err) {
+        console.error('err: ', err)
+        notifyHandler('negative', 'Failed to order ride', err)
+      }
+      this.rideConfirmed = false
+      this.confirmedDestinations.length = 0
+      this.searchResults = ""
+    },
+
+    showRideProgress(){
+      this.requestMoreInfoOpen = true
+      console.log('locStore.location: ', this.locStore.location)
     },
   },
 }
