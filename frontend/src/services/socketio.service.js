@@ -113,6 +113,24 @@ class SocketioService {
       this.socket.on('rideHasBegun', message => {
         console.log('rideHasBegun message: ', message)
         notifyHandler('info', 'Ride has begun')
+        return cb(null, message)
+      })      
+    }
+  }
+
+  endRide({passengerId, driverId, route, tripId}, cb) {
+    console.log('endRide passengerId: ', passengerId, '. driverId: ', driverId, '. route: ', route, '. tripId: ', tripId)
+    if (this.socket) {
+      this.socket.emit('endRide', {passengerId, driverId, route, tripId}, cb)
+    }
+  }
+
+  subscribeToRideHasEnded(cb) {
+    if (this.socket) {
+      this.socket.on('rideHasEnded', message => {
+        console.log('rideHasEnded message: ', message)
+        notifyHandler('info', 'Ride has ended')
+        return cb(null, message)
       })
     }
   }

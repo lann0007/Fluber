@@ -93,7 +93,8 @@ import { useEphemeralStore } from 'src/stores/ephemeral'
 import MapComponent from '../components/MapComponent.vue'
 import { useAuthStore } from 'src/stores/auth'
 import { useRideStateStore } from 'src/stores/rideState'
-
+import axios from 'axios'
+import * as c from 'src/misc/constants'
 
 export default {
   name: 'Driver-page',
@@ -184,8 +185,31 @@ export default {
       })
     },
     endRide(){
-      this.rideBegun = false
-      this.acceptRide = false
+      socketioService.endRide({passengerId: this.viewingMoreRide.user.id, driverId: this.authStore.user.id, route: this.viewingMoreRide.route, tripId: this.rideStateStore.tripId}, cb => {
+        console.log(cb)
+        axios.post(`${c.coreApiBaseUrl}/api/completed-trips`, {
+          data: {
+            trip_id: this.rideStateStore.tripId,
+            user_driver: this.authStore.user.id,
+            user_passenger: this.viewingMoreRide.user.id,
+          }
+        }, {
+          headers: {
+            Authorization: `Bearer ${this.authStore.authToken}`
+          }
+        })
+        .then(resp => {
+          console.log('resp: ', resp)
+          this.rideStateStore.clearTripId()
+          this.ephemeralStore.clearRideRequests()
+
+          this.rideBegun = false
+          this.acceptRide = false
+        })
+        .catch(err => {
+          console.error(err)
+        })        
+      })      
     }
   }
 }

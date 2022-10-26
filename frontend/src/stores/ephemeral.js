@@ -22,6 +22,9 @@ export const useEphemeralStore = defineStore('ephemeral', {
     },
     addRideRequest(rideRequest) {
       this.rideRequests.push(rideRequest)
+    },
+    clearRideRequests() {
+      this.rideRequests = []
     }
   }
 })

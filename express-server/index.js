@@ -88,6 +88,19 @@ io.on('connection', (socket) => {
       status: 'ok'
     })
   })
+
+  socket.on('endRide', ({passengerId, driverId, route, tripId}, callback) => {
+    const outgoingMessage = {
+      passengerId: passengerId,
+      driverId: driverId,
+      route: route,
+      tripId: tripId,
+    }
+    socket.to(passengerId).emit('rideHasEnded', outgoingMessage)
+    callback({
+      status: 'ok'
+    })
+  })
 })
 
 //use Strapi to verify token - this method is a bit of a workaround, as it should be

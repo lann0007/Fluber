@@ -53,6 +53,8 @@ import EssentialLink from 'components/EssentialLink.vue'
 import { useAuthStore } from 'src/stores/auth'
 import { notifyHandler } from 'src/misc/helpers'
 import SocketioService from '../services/socketio.service.js'
+import { useRideStateStore } from 'src/stores/rideState'
+import { useLocationStore } from 'src/stores/loc'
 
 const linksList = [
   {
@@ -83,6 +85,8 @@ export default defineComponent({
   setup() {
     const leftDrawerOpen = ref(false)
     const authStore = useAuthStore()
+    const rideStateStore = useRideStateStore()
+    const locStore = useLocationStore()
 
     return {
       essentialLinks: linksList,
@@ -90,7 +94,9 @@ export default defineComponent({
       toggleLeftDrawer() {
         leftDrawerOpen.value = !leftDrawerOpen.value
       },
-      authStore
+      authStore,
+      rideStateStore,
+      locStore,
     }
   },
   mounted() {
@@ -134,6 +140,12 @@ export default defineComponent({
         SocketioService.subscribeToRideHasBegun((err, data) => {
           if (err) console.error('err: ', err)
           if (data) console.log('data: ', data)
+        })
+        SocketioService.subscribeToRideHasEnded((err, data) => {
+          if (err) console.error('err: ', err)
+          if (data) console.log('data: ', data)
+          this.rideStateStore.clearTripId()
+          this.locStore.clearLocation()
         })
       }
     }
